@@ -244,6 +244,7 @@ namespace task.trans
                                             {
                                                 if (!IsTraInTrans(traid)
                                                     && !PubTask.Carrier.HaveInTrack(traid, trans.carrier_id)
+                                                    && PubMaster.Area.isFerryWithTrack(trans.area_id, trans.give_ferry_id, traid)
                                                     && PubTask.Carrier.IsTaskAndDoTask(trans.carrier_id, DevCarrierTaskE.终止)
                                                     && SetGiveSite(trans, traid))
                                                 {
@@ -761,7 +762,8 @@ namespace task.trans
                                                     {
                                                         foreach (var trackid in trackids)
                                                         {
-                                                            if (!HaveInTileTrack(trackid))
+                                                            if (!HaveInTileTrack(trackid)
+                                                              && PubMaster.Area.isFerryWithTrack(trans.area_id, trans.give_ferry_id, trackid))
                                                             {
                                                                 trans.finish_track_id = trackid;
                                                                 isallocate = true;
@@ -776,7 +778,8 @@ namespace task.trans
                                                     {
                                                         foreach (Stock stock in allocatestocks)
                                                         {
-                                                            if (!PubTask.Carrier.HaveInTrack(stock.track_id))
+                                                            if (!PubTask.Carrier.HaveInTrack(stock.track_id)
+                                                              && PubMaster.Area.isFerryWithTrack(trans.area_id, trans.give_ferry_id, stock.track_id))
                                                             {
                                                                 trans.finish_track_id = stock.track_id;
                                                                 isallocate = true;

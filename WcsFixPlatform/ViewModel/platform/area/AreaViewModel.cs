@@ -1,10 +1,12 @@
 ﻿using enums;
+using enums.track;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using HandyControl.Controls;
 using HandyControl.Tools.Extension;
 using module.area;
 using module.device;
+using module.track;
 using module.window;
 using resource;
 using System;
@@ -154,6 +156,8 @@ namespace wcs.ViewModel
         public RelayCommand<string> AddOtherAreaCmd => new Lazy<RelayCommand<string>>(() => new RelayCommand<string>(AddOtherArea)).Value;
         public RelayCommand<string> AddOtherTileAreaCmd => new Lazy<RelayCommand<string>>(() => new RelayCommand<string>(AddOtherTileArea)).Value;
 
+        public RelayCommand AddOtherTrackCmd => new Lazy<RelayCommand>(() => new RelayCommand(AddOtherTrack)).Value;
+        public RelayCommand AddOtherTileTrackCmd => new Lazy<RelayCommand>(() => new RelayCommand(AddOtherTileTrack)).Value;
 
         #endregion
 
@@ -384,8 +388,56 @@ namespace wcs.ViewModel
                 }
             }
         }
-        
 
+        /// <summary>
+        /// 选择轨道添加
+        /// </summary>
+        private async void AddOtherTrack()
+        {
+            if (_selectferry == null)
+            {
+                return;
+            }
+
+            TrackTypeE tracktype1, tracktype2, tiletrtype;
+            switch (_selectferry.Type)
+            {
+                case DeviceTypeE.上摆渡:
+                    tracktype1 = TrackTypeE.储砖_出;
+                    tracktype2 = TrackTypeE.储砖_出入;
+                    tiletrtype = TrackTypeE.上砖轨道;
+                    break;
+                case DeviceTypeE.下摆渡:
+                    tracktype1 = TrackTypeE.储砖_入;
+                    tracktype2 = TrackTypeE.储砖_出入;
+                    tiletrtype = TrackTypeE.下砖轨道;
+                    break;
+                default:
+                    return;
+            }
+            DialogResult result = await HandyControl.Controls.Dialog.Show<TrackSelectDialog>()
+                 .Initialize<TrackSelectViewModel>((vm) =>
+                 {
+                     vm.SetAreaFilter(0, true);
+                     vm.QueryTrack(new List<TrackTypeE>() { tracktype1, tracktype2, tiletrtype });
+                 }).GetResultAsync<DialogResult>();
+            if (result.p1 is Track tra)
+            {
+                if (PubMaster.Area.IsInDevTrack(tra.id, SelectAreaId, _selectferry.id))
+                {
+                    Growl.Warning("已存在该轨道！");
+                    return;
+                }
+
+                PubMaster.Area.AddAreaTrack(tra.id, SelectAreaId, _selectferry);
+
+                FerryTraList.Clear();
+                foreach (var item in PubMaster.Area.GetAreaDevTraList(SelectAreaId, _selectferry.id))
+                {
+                    FerryTraList.Add(item);
+                }
+            }
+        }
 
         #endregion
 
@@ -463,6 +515,55 @@ namespace wcs.ViewModel
                 }
             }
         }
+
+        /// <summary>
+        /// 选择轨道添加
+        /// </summary>
+        private async void AddOtherTileTrack()
+        {
+            if (_selecttile == null)
+            {
+                return;
+            }
+
+            TrackTypeE tracktype1, tracktype2;
+            switch (_selecttile.Type)
+            {
+                case DeviceTypeE.上砖机:
+                    tracktype1 = TrackTypeE.储砖_出;
+                    tracktype2 = TrackTypeE.储砖_出入;
+                    break;
+                case DeviceTypeE.下砖机:
+                    tracktype1 = TrackTypeE.储砖_入;
+                    tracktype2 = TrackTypeE.储砖_出入;
+                    break;
+                default:
+                    return;
+            }
+            DialogResult result = await HandyControl.Controls.Dialog.Show<TrackSelectDialog>()
+                 .Initialize<TrackSelectViewModel>((vm) =>
+                 {
+                     vm.SetAreaFilter(0, true);
+                     vm.QueryTrack(new List<TrackTypeE>() { tracktype1, tracktype2 });
+                 }).GetResultAsync<DialogResult>();
+            if (result.p1 is Track tra)
+            {
+                if (PubMaster.Area.IsInDevTrack(tra.id, SelectAreaId, _selecttile.id))
+                {
+                    Growl.Warning("已存在该轨道！");
+                    return;
+                }
+
+                PubMaster.Area.AddAreaTrack(tra.id, SelectAreaId, _selecttile);
+
+                TileTraList.Clear();
+                foreach (var item in PubMaster.Area.GetAreaDevTraList(SelectAreaId, _selecttile.id))
+                {
+                    TileTraList.Add(item);
+                }
+            }
+        }
+
         #endregion
 
         #region[保存的数据库]

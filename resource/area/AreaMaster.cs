@@ -218,6 +218,19 @@ namespace resource.area
         }
 
         /// <summary>
+        /// 摆渡车是否允许定位轨道
+        /// </summary>
+        /// <param name="areaid"></param>
+        /// <param name="ferryid"></param>
+        /// <param name="trackid"></param>
+        /// <returns></returns>
+        public bool isFerryWithTrack(uint areaid, uint ferryid, uint trackid)
+        {
+            return AreaDevTraList.Exists(c => c.area_id == areaid && c.device_id == ferryid && c.track_id == trackid);
+
+        }
+
+        /// <summary>
         /// 获取摆渡车ID或摆渡车轨道的ID
         /// </summary>
         /// <param name="trans"></param>
@@ -353,6 +366,35 @@ namespace resource.area
             Refresh(false, false, false, true);
         }
 
+        public bool IsInDevTrack(uint trackid, uint toareaid, uint devid)
+        {
+            return AreaDevTraList.Exists(c => c.area_id == toareaid && c.device_id == devid && c.track_id == trackid);
+        }
+
+        public void AddAreaTrack(uint trackid, uint toareaid, Device dev)
+        {
+            ushort prior = (ushort)AreaDevTraList.Count(c => c.area_id == toareaid && c.device_id == dev.id);
+            prior++;
+
+            if (AreaDevTraList.Exists(c => c.area_id == toareaid && c.device_id == dev.id && c.track_id == trackid))
+            {
+                return;
+            }
+
+            AreaDeviceTrack areatradev = new AreaDeviceTrack()
+            {
+                area_id = toareaid,
+                device_id = dev.id,
+                track_id = trackid,
+                prior = prior,
+            };
+
+            PubMaster.Mod.AreaSql.AddAreaDeviceTrack(areatradev);
+            prior += 1;
+
+            Refresh(false, false, false, true);
+        }
+
         public bool IsFerrySetTrack(uint ferryid, uint trackid)
         {
             return AreaDevTraList.Exists(c => c.device_id == ferryid && c.track_id == trackid);
@@ -387,7 +429,16 @@ namespace resource.area
 
         public bool IsSortTaskLimit(ushort area, int count)
         {
-            return AreaList.Exists(c => c.id == area && count >= c.c_sorttask);
+            int carcount = PubMaster.Device.GetCarriers(area);
+            if (carcount > 5)
+            {
+                return count >= 2;
+            }
+            else
+            {
+                return count >= 1;
+            }
+            //return AreaList.Exists(c => c.id == area && count >= c.c_sorttask);
         }
 
         public ushort GetAreaFullQty(uint id)

@@ -641,16 +641,32 @@ namespace task.device
                     //上砖测轨道ID 或 下砖测轨道ID
                     if (task.UpTrackId == to_track_id && task.IsUpLight)
                     {
-                        Thread.Sleep(1000);
-                        task.DoStop();
-                        return true;
+                        if (task.DevStatus.CurrentTask == DevFerryTaskE.终止)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            Thread.Sleep(1000);
+                            task.DoStop();
+                        }
+
+                        return false;
                     }
                     
                     if (task.DownTrackId == to_track_id && task.IsDownLight)
                     {
-                        Thread.Sleep(1000);
-                        task.DoStop();
-                        return true;
+                        if (task.DevStatus.CurrentTask == DevFerryTaskE.终止)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            Thread.Sleep(1000);
+                            task.DoStop();
+                        }
+
+                        return false;
                     }
 
                     // 定位前检查同轨道的摆渡车

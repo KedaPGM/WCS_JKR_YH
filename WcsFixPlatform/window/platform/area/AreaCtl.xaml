@@ -90,11 +90,13 @@
                         <Grid Grid.Row="0" Margin="10">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="摆渡车：" Width="100" Style="{StaticResource TextBlockTitle}"/>
-                                <TextBlock Text="{Binding FerryName}" Width="200" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22"/>
+                                <TextBlock Text="{Binding FerryName}" Width="150" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22"/>
                                 <Button Content="选择" Style="{StaticResource ButtonPrimary}" Command="{Binding FerrySelectedCmd}" FontSize="16" Height="35"/>
 
-                                <Border Margin="50,0,0,0">
-                                    <Label Content="添加其他轨道" FontSize="{StaticResource MLightFS}" Background="#E6E6E6"></Label>
+                                <Button Margin="50,0,0,0" Content="添加轨道" Style="{StaticResource ButtonInfo}" Command="{Binding AddOtherTrackCmd}" FontSize="16" Height="35"/>
+
+                                <Border Margin="10,0,0,0">
+                                    <Label Content="添加其他区域轨道" FontSize="{StaticResource MLightFS}" Background="#E6E6E6"></Label>
                                     <Border.ContextMenu>
                                         <ContextMenu>
                                             <MenuItem Header="#1" Tag="1"   Command="{Binding AddOtherAreaCmd}"  CommandParameter="{Binding Tag,RelativeSource={RelativeSource Self}}" Width="160" HorizontalAlignment="Center" FontSize="22"/>
@@ -137,11 +139,13 @@
                         <Grid Grid.Row="0" Margin="10">
                             <StackPanel  Orientation="Horizontal">
                                 <TextBlock Text="上下砖机：" Width="100" Style="{StaticResource TextBlockTitle}"/>
-                                <TextBlock Text="{Binding TileName}" Width="200" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22"/>
+                                <TextBlock Text="{Binding TileName}" Width="150" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22"/>
                                 <Button Content="选择" Style="{StaticResource ButtonPrimary}" Command="{Binding TileSelectedCmd}" FontSize="16" Height="35"/>
 
-                                <Border Margin="50,0,0,0">
-                                    <Label Content="添加其他轨道" FontSize="{StaticResource MLightFS}" Background="#E6E6E6"></Label>
+                                <Button Margin="50,0,0,0" Content="添加轨道" Style="{StaticResource ButtonInfo}" Command="{Binding AddOtherTileTrackCmd}" FontSize="16" Height="35"/>
+
+                                <Border Margin="10,0,0,0">
+                                    <Label Content="添加其他区域轨道" FontSize="{StaticResource MLightFS}" Background="#E6E6E6"></Label>
                                     <Border.ContextMenu>
                                         <ContextMenu>
                                             <MenuItem Header="#1" Tag="1"   Command="{Binding AddOtherTileAreaCmd}"  CommandParameter="{Binding Tag,RelativeSource={RelativeSource Self}}" Width="160" HorizontalAlignment="Center" FontSize="22"/>

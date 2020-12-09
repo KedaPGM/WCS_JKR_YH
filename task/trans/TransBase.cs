@@ -419,7 +419,7 @@ namespace task.trans
             {
                 try
                 {
-                    return TransList.Exists(c => !c.finish && (c.take_track_id == trackid|| c.give_track_id == trackid));
+                    return TransList.Exists(c => !c.finish && (c.take_track_id == trackid|| c.give_track_id == trackid || c.finish_track_id == trackid));
                 }
                 finally
                 {

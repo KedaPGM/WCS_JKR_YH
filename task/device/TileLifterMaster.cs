@@ -456,6 +456,12 @@ namespace task.device
                 return;
             }
 
+            if (PubTask.Trans.HaveInTileTrack(task.LeftTrackId) ||
+                PubTask.Trans.HaveInTileTrack(task.RigthTrackId))
+            {
+                return;
+            }
+
             #endregion
 
             #region[工位1有需求]

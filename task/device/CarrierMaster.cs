@@ -366,7 +366,10 @@ namespace task.device
             task.CheckAlert();
             if (task.OperateMode == DevOperateModeE.手动)
             {
-                DoTask(task.ID, DevCarrierTaskE.终止);
+                if (task.Task != DevCarrierTaskE.终止 && task.Task != DevCarrierTaskE.无)
+                {
+                    DoTask(task.ID, DevCarrierTaskE.终止);
+                }
 
                 Track track = PubMaster.Track.GetTrack(task.TrackId);
                 if (track.Type == TrackTypeE.摆渡车_入 || track.Type == TrackTypeE.摆渡车_出)
@@ -565,6 +568,12 @@ namespace task.device
         public bool DoManualTask(uint devid, DevCarrierTaskE carriertask, out string result, bool isoversize = false)
         {
             bool isferryupsite = false;
+            ushort trackcode = PubTask.Carrier.GetCarrierSite(devid);
+            if (trackcode == 0)
+            {
+                result = "小车当前站点为0";
+                return false;
+            }
             switch (carriertask)
             {
                 case DevCarrierTaskE.后退取砖:
@@ -585,13 +594,18 @@ namespace task.device
                 case DevCarrierTaskE.后退至摆渡车:
                 case DevCarrierTaskE.前进至摆渡车:
                     #region[判断是否有摆渡车]
-                    ushort trackcode = PubTask.Carrier.GetCarrierSite(devid);
-                    if (trackcode == 0)
+                    if (carriertask == DevCarrierTaskE.后退至摆渡车
+                        && !((trackcode >= 200 && trackcode < 300) || (trackcode >= 600 && trackcode < 700)))
                     {
-                        result = "小车当前站点为0";
+                        result = "小车需要在入库轨道头或者上砖轨道";
                         return false;
                     }
-
+                    if (carriertask == DevCarrierTaskE.前进至摆渡车
+                        && !((trackcode >= 500 && trackcode < 600) || (trackcode >= 100 && trackcode < 200)))
+                    {
+                        result = "小车需要在出库轨道头或者下砖轨道";
+                        return false;
+                    }
                     if (!PubTask.Ferry.HaveFerryOnTrack(trackcode, carriertask, out result))
                     {
                         return false;
@@ -599,11 +613,26 @@ namespace task.device
                     #endregion
                     break;
                 case DevCarrierTaskE.后退至轨道倒库:
+                    if (!((trackcode >= 500 && trackcode < 600) || trackcode >= 740))
+                    {
+                        result = "小车需要在出库轨道或者上砖摆渡车";
+                        return false;
+                    }
                     break;
                 case DevCarrierTaskE.前进至点:
+                    if (!((trackcode >= 100 && trackcode < 400) || (trackcode >= 700 && trackcode < 740)))
+                    {
+                        result = "小车需要在入库轨道或者下砖摆渡车";
+                        return false;
+                    }
                     isferryupsite = true;
                     break;
                 case DevCarrierTaskE.后退至点:
+                    if (!((trackcode >= 300 && trackcode < 600) || trackcode >= 740))
+                    {
+                        result = "小车需要在出库轨道或者上砖摆渡车";
+                        return false;
+                    }
                     break;
                 case DevCarrierTaskE.顶升取货:
                     break;
@@ -614,7 +643,7 @@ namespace task.device
             }
 
             //小车在摆渡车上-离开摆渡车时，需要判断摆渡车是否停止、并且对准轨道
-            if(carriertask != DevCarrierTaskE.终止
+            if (carriertask != DevCarrierTaskE.终止
                 && carriertask != DevCarrierTaskE.下降放货
                 && carriertask != DevCarrierTaskE.顶升取货
                 && carriertask != DevCarrierTaskE.前进至摆渡车

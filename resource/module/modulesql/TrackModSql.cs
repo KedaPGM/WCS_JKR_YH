@@ -27,7 +27,7 @@ namespace resource.module.modulesql
                 " t.left_track_id, t.right_track_id, t.memo," +
                 " t.rfid_1, t.rfid_2, t.rfid_3, t.rfid_4, t.rfid_5, t.rfid_6," +
                 " t.`order`, t.`recent_goodid`, t.`recent_tileid`, t.`alert_status`, t.`alert_carrier`," +
-                " t.`alert_trans`, t.`early_full`, t.`full_time` FROM track AS t ORDER BY t.`order`");
+                " t.`alert_trans`, t.`early_full`, t.`full_time` FROM track AS t ORDER BY t.type, t.`order`");
             DataTable dt = mSql.ExecuteQuery(@sql);
             if (!mSql.IsNoData(dt))
             {

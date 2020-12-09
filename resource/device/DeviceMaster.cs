@@ -69,6 +69,11 @@ namespace resource.device
             return DeviceList.FindAll(c => c.Type == DeviceTypeE.上摆渡 || c.Type == DeviceTypeE.下摆渡);
         }
 
+        public int GetCarriers(ushort area)
+        {
+            return DeviceList.FindAll(c => c.area == area && c.Type == DeviceTypeE.运输车 && c.do_work && c.enable).Count;
+        }
+
         public List<Device> GetTileLifters()
         {
             return DeviceList.FindAll(c => c.Type == DeviceTypeE.上砖机 || c.Type == DeviceTypeE.下砖机);
