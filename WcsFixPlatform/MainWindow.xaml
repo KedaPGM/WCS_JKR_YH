@@ -32,7 +32,7 @@
                             <RowDefinition />
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
-                        <Image Grid.Row="0" Source="/Resources/Img/KEDA.png" Margin="5" VerticalAlignment="Center"/>
+                        <Image Grid.Row="0" Source="/Resources/keda_blue.png" Margin="5" VerticalAlignment="Center"/>
                         <TextBlock Grid.Row="1" Text="储 砖 调 度 系 统" VerticalAlignment="Bottom" HorizontalAlignment="Center"
                                    FontSize="18"/>
                     </Grid>
