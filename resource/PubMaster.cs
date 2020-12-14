@@ -3,6 +3,7 @@ using resource.device;
 using resource.diction;
 using resource.goods;
 using resource.module;
+using resource.role;
 using resource.tiletrack;
 using resource.track;
 using task;
@@ -20,6 +21,7 @@ namespace resource
         public static GoodsMaster Goods { set; get; }
         public static WarningMaster Warn { set; get; }
         public static TileTrackMaster TileTrack { set; get; }
+        public static RoleMaster Role { set; get; }
 
         public static void Init()
         {
@@ -31,6 +33,13 @@ namespace resource
             Goods = new GoodsMaster();
             Warn = new WarningMaster();
             TileTrack = new TileTrackMaster();
+            Role = new RoleMaster();
+            PreStart();
+        }
+
+        public static void PreStart()
+        {
+            Role?.Start();
         }
 
         public static void StartMaster()
@@ -50,6 +59,7 @@ namespace resource
         {
             Warn.Stop();
             Mod.Stop();
+            Role?.Stop();
             Dic.Stop();
             Device.Stop();
             Track.Stop();

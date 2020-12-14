@@ -6,7 +6,7 @@ using System.Windows.Media;
 
 namespace wcs.Tools.Converter
 {
-    class String2GeometryConveter : IValueConverter
+    public class String2GeometryConveter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {

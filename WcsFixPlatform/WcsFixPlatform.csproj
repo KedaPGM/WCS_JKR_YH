@@ -142,6 +142,12 @@
     <Compile Include="Dialog\platform\goods\GoodsEditDialog.xaml.cs">
       <DependentUpon>GoodsEditDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Dialog\platform\menu\MenuSelectDialog.xaml.cs">
+      <DependentUpon>MenuSelectDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Dialog\platform\module\ModuleSelectDialog.xaml.cs">
+      <DependentUpon>ModuleSelectDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Dialog\platform\operate\OperateGrandDialog.xaml.cs">
       <DependentUpon>OperateGrandDialog.xaml</DependentUpon>
     </Compile>
@@ -154,6 +160,9 @@
     <Compile Include="Dialog\platform\track\TrackSelectDialog.xaml.cs">
       <DependentUpon>TrackSelectDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Dialog\platform\user\UserEditDialog.xaml.cs">
+      <DependentUpon>UserEditDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Lang\Lang.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -165,6 +174,7 @@
     <Compile Include="Tools\Converter\Date2StringLongConverter.cs" />
     <Compile Include="Tools\Converter\DevId2NameConverter.cs" />
     <Compile Include="Tools\Converter\GoodId2NameConverter.cs" />
+    <Compile Include="Tools\Converter\RoleId2RoleNameConveter.cs" />
     <Compile Include="Tools\Converter\String2BrushConverter.cs" />
     <Compile Include="Tools\Converter\String2GeometryConveter.cs" />
     <Compile Include="Tools\Converter\AreaId2NameConverter.cs" />
@@ -208,6 +218,12 @@
     <Compile Include="ViewModel\platform\waring\WarnLogViewModel.cs" />
     <Compile Include="ViewModel\platform\waring\WaringViewModel.cs" />
     <Compile Include="ViewModel\setting\ferry\FerryPosViewModel.cs" />
+    <Compile Include="ViewModel\setting\menu\MenuSelectViewModel.cs" />
+    <Compile Include="ViewModel\setting\menu\MenuViewModel.cs" />
+    <Compile Include="ViewModel\setting\module\ModuleSelectViewModel.cs" />
+    <Compile Include="ViewModel\setting\toolbar\ToolBarViewModel.cs" />
+    <Compile Include="ViewModel\setting\user\UserEditViewModel.cs" />
+    <Compile Include="ViewModel\setting\user\UserViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
     <Compile Include="window\platform\area\AreaSwitchCtl.xaml.cs">
       <DependentUpon>AreaSwitchCtl.xaml</DependentUpon>
@@ -272,6 +288,15 @@
     <Compile Include="window\setting\ferry\FerryPosCtl.xaml.cs">
       <DependentUpon>FerryPosCtl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="window\setting\menu\MenuCtl.xaml.cs">
+      <DependentUpon>MenuCtl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="window\setting\toolbar\MainToolBarCtl.xaml.cs">
+      <DependentUpon>MainToolBarCtl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="window\setting\user\UserCtl.xaml.cs">
+      <DependentUpon>UserCtl.xaml</DependentUpon>
+    </Compile>
     <Page Include="Dialog\platform\device\ChangeStrategyDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -300,6 +325,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Dialog\platform\menu\MenuSelectDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Dialog\platform\module\ModuleSelectDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Dialog\platform\operate\OperateGrandDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -315,6 +348,10 @@
     <Page Include="Dialog\platform\track\TrackSelectDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Dialog\platform\user\UserEditDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -457,6 +494,18 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="window\setting\ferry\FerryPosCtl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="window\setting\menu\MenuCtl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="window\setting\toolbar\MainToolBarCtl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="window\setting\user\UserCtl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -642,5 +691,6 @@
   <ItemGroup>
     <Resource Include="Resources\keda_blue.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -56,6 +56,7 @@
     <Compile Include="diction\Diction.cs" />
     <Compile Include="diction\DictionDtl.cs" />
     <Compile Include="diction\ValueDiction.cs" />
+    <Compile Include="diction\VersionDic.cs" />
     <Compile Include="goods\Goods.cs" />
     <Compile Include="goods\Stock.cs" />
     <Compile Include="goods\StockSum.cs" />
@@ -101,6 +102,12 @@
     <Compile Include="rf\track\TrackUpdatePack.cs" />
     <Compile Include="rf\trans\TransPack.cs" />
     <Compile Include="rf\warn\WarnPack.cs" />
+    <Compile Include="role\MenuModel.cs" />
+    <Compile Include="role\WcsMenu.cs" />
+    <Compile Include="role\WcsMenuDtl.cs" />
+    <Compile Include="role\WcsModule.cs" />
+    <Compile Include="role\WcsRole.cs" />
+    <Compile Include="role\WcsUser.cs" />
     <Compile Include="tiletrack\TileTrack.cs" />
     <Compile Include="track\FerryPos.cs" />
     <Compile Include="track\Track.cs" />

@@ -67,11 +67,13 @@
     <Compile Include="module\modulesql\DeviceModSql.cs" />
     <Compile Include="module\modulesql\DictionModSql.cs" />
     <Compile Include="module\modulesql\GoodsModSql.cs" />
+    <Compile Include="module\modulesql\RoleModSql.cs" />
     <Compile Include="module\modulesql\TileTrackModSql.cs" />
     <Compile Include="module\modulesql\TrackModSql.cs" />
     <Compile Include="module\modulesql\WarnModSql.cs" />
     <Compile Include="PubMaster.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="role\RoleMaster.cs" />
     <Compile Include="tiletrack\TileTrackMaster.cs" />
     <Compile Include="track\TrackMaster.cs" />
     <Compile Include="warning\WarningMaster.cs" />

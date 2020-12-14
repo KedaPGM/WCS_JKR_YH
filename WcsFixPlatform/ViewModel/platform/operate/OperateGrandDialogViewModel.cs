@@ -3,6 +3,7 @@ using GalaSoft.MvvmLight.Command;
 using HandyControl.Controls;
 using HandyControl.Tools.Extension;
 using module.msg;
+using resource;
 using System;
 using System.Windows;
 
@@ -25,8 +26,9 @@ namespace wcs.ViewModel
 
         #region[字段]
         private MsgAction _result;
+        private string username;
         private string password;
-        private string titlename = "输入认证密码";
+        private string titlename = "请认证";
         private Visibility showicon = Visibility.Collapsed;
 
         #endregion
@@ -44,6 +46,11 @@ namespace wcs.ViewModel
             set => Set(ref titlename, value);
         }
 
+        public string USERNAME
+        {
+            get => username;
+            set => Set(ref username, value);
+        }
         public string PASSWORD
         {
             get => password;
@@ -65,30 +72,41 @@ namespace wcs.ViewModel
         {
             if (isexistshow)
             {
-                TITLENAME = "输入退出调度密码！"; ;
+                TITLENAME = "退出调度认证！"; ;
                 SHOWICON = Visibility.Visible;
             }
             else
             {
-                TITLENAME = "输入认证密码！"; ;
+                TITLENAME = "授权认证！"; ;
                 SHOWICON = Visibility.Collapsed;
             }
+            USERNAME = "";
+            PASSWORD = "";
         }
 
         private void Comfirm()
         {
+            if (string.IsNullOrEmpty(USERNAME))
+            {
+                Growl.Warning("请输入用户名！");
+                return;
+            }
+
             if (string.IsNullOrEmpty(PASSWORD))
             {
                 Growl.Warning("请输入认证密码！");
                 return;
             }
-            Result.o1 = PASSWORD;
+
+            Result.o1 = PubMaster.Role.GetUser(USERNAME, PASSWORD);
+            Result.o3 = USERNAME;
             CloseAction?.Invoke();
         }
 
         private void CancelChange()
         {
             Result.o1 = -1;
+            Result.o3 = USERNAME;
             CloseAction?.Invoke();
         }
 

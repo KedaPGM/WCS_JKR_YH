@@ -1,5 +1,7 @@
-﻿using module.area;
+﻿using enums;
+using module.area;
 using module.device;
+using module.diction;
 using module.goods;
 using module.track;
 using System;
@@ -10,6 +12,7 @@ namespace module.rf
     public class DictionPack
     {
         public List<RfDiction> DicList { set; get; }
+        public VersionDic VersionDic { set; get; }
 
         public void AddDic(RfDiction dic)
         {
@@ -132,24 +135,81 @@ namespace module.rf
 
         public void AddDevice(List<Device> lists)
         {
-            RfDiction dic = new RfDiction
+            RfDiction devdic = new RfDiction
             {
                 DicName = "设备字典",
                 DicCode = "DeviceDic"
             };
 
-            int order = 0;
+            RfDiction ferrydic = new RfDiction
+            {
+                DicName = "摆渡字典",
+                DicCode = "FerryDic"
+            };
+
+            RfDiction carrierdic = new RfDiction
+            {
+                DicName = "运输车字典",
+                DicCode = "CarrierDic"
+            };
+
+            RfDiction tilelifterdic = new RfDiction
+            {
+                DicName = "砖机字典",
+                DicCode = "TileLifterDic"
+            };
+
+            int order = 0, ferryorder = 0, tileoder = 0, carrierorder =0;
             foreach (Device item in lists)
             {
-                dic.AddDtl(new RfDictionDtl()
+                devdic.AddDtl(new RfDictionDtl()
                 {
                     DtlOrder = order,
                     DtlValue = (int)item.id,
                     DtlName = item.name
                 });
                 order++;
+
+                switch (item.Type)
+                {
+                    case DeviceTypeE.上砖机:
+                    case DeviceTypeE.下砖机:
+                        tilelifterdic.AddDtl(new RfDictionDtl()
+                        {
+                            DtlOrder = tileoder,
+                            DtlValue = (int)item.id,
+                            DtlName = item.name
+                        });
+                        tileoder++;
+                        break;
+                    case DeviceTypeE.上摆渡:
+                    case DeviceTypeE.下摆渡:
+
+                        ferrydic.AddDtl(new RfDictionDtl()
+                        {
+                            DtlOrder = ferryorder,
+                            DtlValue = (int)item.id,
+                            DtlName = item.name
+                        });
+                        ferryorder++;
+                        break;
+                    case DeviceTypeE.运输车:
+
+                        carrierdic.AddDtl(new RfDictionDtl()
+                        {
+                            DtlOrder = carrierorder,
+                            DtlValue = (int)item.id,
+                            DtlName = item.name
+                        });
+                        carrierorder++;
+                        break;
+                }
             }
-            AddDic(dic);
+
+            AddDic(devdic);
+            AddDic(tilelifterdic);
+            AddDic(ferrydic);
+            AddDic(carrierdic);
         }
 
         public void AddGood(List<Goods> lists)
@@ -174,12 +234,42 @@ namespace module.rf
             AddDic(dic);
         }
 
+
+        public void AddVersion(string dictag, int version)
+        {
+            VersionDic = new VersionDic()
+            {
+                Name = dictag,
+                Version = version
+            };
+        }
+
         public void AddFerry(List<Device> lists)
         {
             RfDiction dic = new RfDiction
             {
-                DicName = "摆渡字典",
-                DicCode = "FerryDic"
+            };
+
+            int order = 0;
+            foreach (Device item in lists)
+            {
+                dic.AddDtl(new RfDictionDtl()
+                {
+                    DtlOrder = order,
+                    DtlValue = (int)item.id,
+                    DtlName = item.name
+                });
+                order++;
+            }
+            AddDic(dic);
+        }
+
+        public void AddCarrier(List<Device> lists)
+        {
+            RfDiction dic = new RfDiction
+            {
+                DicName = "运输车字典",
+                DicCode = "CarrierDic"
             };
 
             int order = 0;

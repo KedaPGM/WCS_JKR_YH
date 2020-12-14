@@ -317,5 +317,31 @@ namespace resource.diction
             return list ;
         }
         #endregion
+
+        #region[版本更新]
+
+        public void UpdateVersion(string dictag)
+        {
+            DictionDtl dtl = GetDtlInCode(dictag);
+            if (dtl != null)
+            {
+                dtl.int_value++;
+                PubMaster.Mod.DicSql.EditDicDtlValue(dtl, ValueTypeE.Integer);
+            }
+        }
+
+        public bool IsVersionDiffer(VersionDic pack)
+        {
+            DictionDtl dtl = GetDtlInCode(pack.Name);
+
+            if (dtl != null)
+            {
+                return dtl.int_value != pack.Version;
+            }
+
+            return false;
+        }
+
+        #endregion
     }
 }

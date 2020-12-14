@@ -110,7 +110,7 @@ namespace task.device
                                 task.DoQuery();
                             }
 
-                            if (_IsSetting && _FerryPosSetList.Find(c => c.FerryId == task.ID) is FerryPosSet set)
+                            if (task.IsEnable && _IsSetting && _FerryPosSetList.Find(c => c.FerryId == task.ID) is FerryPosSet set)
                             {
                                 Thread.Sleep(1000);
                                 task.DoSiteQuery(set.QueryPos);
@@ -121,13 +121,13 @@ namespace task.device
                                 //上砖测轨道ID 或 下砖测轨道ID
                                 if (task.UpTrackId == PubMaster.Track.GetTrackId(task.DevStatus.TargetSite) && task.IsUpLight)
                                 {
-                                    Thread.Sleep(1000);
+                                    Thread.Sleep(500);
                                     task.DoStop();
                                 }
 
                                 if (task.DownTrackId == PubMaster.Track.GetTrackId(task.DevStatus.TargetSite) && task.IsDownLight)
                                 {
-                                    Thread.Sleep(1000);
+                                    Thread.Sleep(500);
                                     task.DoStop();
                                 }
                             }
@@ -638,6 +638,13 @@ namespace task.device
                         || ((task.DevStatus.CurrentTask == DevFerryTaskE.终止 || task.DevStatus.CurrentTask == DevFerryTaskE.定位)
                             && (task.DevStatus.FinishTask == DevFerryTaskE.未知 || task.DevStatus.FinishTask == DevFerryTaskE.定位))))
                 {
+                    if (task.DevStatus.TargetSite != 0 && PubMaster.Track.GetTrackId(task.DevStatus.TargetSite) != to_track_id)
+                    {
+                        Thread.Sleep(500);
+                        task.DoStop();
+                        return false;
+                    }
+
                     //上砖测轨道ID 或 下砖测轨道ID
                     if (task.UpTrackId == to_track_id && task.IsUpLight)
                     {
@@ -647,7 +654,7 @@ namespace task.device
                         }
                         else
                         {
-                            Thread.Sleep(1000);
+                            Thread.Sleep(500);
                             task.DoStop();
                         }
 
@@ -662,7 +669,7 @@ namespace task.device
                         }
                         else
                         {
-                            Thread.Sleep(1000);
+                            Thread.Sleep(500);
                             task.DoStop();
                         }
 

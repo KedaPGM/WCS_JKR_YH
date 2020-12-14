@@ -20,8 +20,8 @@
       [ "StockSum", "StockSum", "ConfigGeometry", "DarkPrimaryBrush", "StockSumCtl" ],
       [ "WarnLog", "WarnLog", "ConfigGeometry", "DarkPrimaryBrush", "WarnLogCtl" ],
       [ "TrackLog", "TrackLog", "ConfigGeometry", "DarkPrimaryBrush", "TrackLogCtl" ],
-      [ "TileTrack", "TileTrack", "ConfigGeometry", "DarkPrimaryBrush", "TileTrackCtl" ]
-
+      [ "TileTrack", "TileTrack", "ConfigGeometry", "DarkPrimaryBrush", "TileTrackCtl" ],
+      [ "Menu", "Menu", "ConfigGeometry", "DarkPrimaryBrush", "MenuCtl" ]
     ]
   }
 ]

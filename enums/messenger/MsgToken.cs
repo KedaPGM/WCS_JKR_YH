@@ -4,6 +4,7 @@ namespace enums
 {
     public static class MsgToken
     {
+        public const string OperateGrandUpdate = nameof(OperateGrandUpdate);
 
         public const string WarningUpdate = nameof(WarningUpdate);
 

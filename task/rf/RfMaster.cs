@@ -3,6 +3,7 @@ using enums.track;
 using GalaSoft.MvvmLight.Messaging;
 using module;
 using module.device;
+using module.diction;
 using module.msg;
 using module.rf;
 using module.rf.carrier;
@@ -250,6 +251,7 @@ namespace task.rf
 
             SendMsg(rf);
         }
+        
         #endregion
 
         #region[处理信息]
@@ -262,7 +264,9 @@ namespace task.rf
                 switch (msg.Pack.Function)
                 {
                     #region[基础]
-
+                    case FunTag.InitVersion:
+                        GetInitVerion(msg);
+                        break;
                     case FunTag.HeartBeat:
                         SendSucc2Rf(msg.MEID, FunTag.HeartBeat, "OK");
                         break;
@@ -279,6 +283,9 @@ namespace task.rf
                         break;
                     case FunTag.UpdateGoodDic:
                         GetGoodDic(msg);
+                        break;
+                    case FunTag.QueryVersion:
+                        GetGoodVerion(msg);
                         break;
                     #endregion
 
@@ -322,7 +329,9 @@ namespace task.rf
                     #endregion
 
                     #region[轨道]
-
+                    case FunTag.QuerySingleTrack:
+                        QuerySingleTrack(msg);
+                        break;
                     case FunTag.QueryTrack:
                         GetTrack(msg);
                         break;
@@ -458,7 +467,7 @@ namespace task.rf
         {
             DictionPack dic = new DictionPack();
             dic.AddGood(PubMaster.Goods.GetGoodsList());
-
+            dic.AddVersion(DicTag.PDA_GOOD_VERSION, PubMaster.Dic.GetDtlIntCode(DicTag.PDA_GOOD_VERSION));
             SendSucc2Rf(msg.MEID, FunTag.UpdateGoodDic, JsonTool.Serialize(dic));
         }
 
@@ -588,6 +597,32 @@ namespace task.rf
         #endregion
 
         #region[初始化]
+
+        private void GetInitVerion(RfMsgMod msg)
+        {
+            if (msg.IsPackHaveData())
+            {
+                VersionDic pack = JsonTool.Deserialize<VersionDic>(msg.Pack.Data);
+                if (pack != null)
+                {
+                    pack.Differ = PubMaster.Dic.IsVersionDiffer(pack);
+                    SendSucc2Rf(msg.MEID, FunTag.InitVersion, JsonTool.Serialize(pack));
+                }
+            }
+        }
+        private void GetGoodVerion(RfMsgMod msg)
+        {
+            if (msg.IsPackHaveData())
+            {
+                VersionDic pack = JsonTool.Deserialize<VersionDic>(msg.Pack.Data);
+                if (pack != null)
+                {
+                    pack.Differ = PubMaster.Dic.IsVersionDiffer(pack);
+                    SendSucc2Rf(msg.MEID, FunTag.QueryVersion, JsonTool.Serialize(pack));
+                }
+            }
+        }
+
         private void GetPdaView(RfMsgMod msg)
         {
             UserModelPack userModule = new UserModelPack()
@@ -767,10 +802,11 @@ namespace task.rf
                 mDicPack.AddTrack(PubMaster.Track.GetTrackList());
                 mDicPack.AddDevice(PubMaster.Device.GetDeviceList());
                 mDicPack.AddGood(PubMaster.Goods.GetGoodsList());
-                mDicPack.AddFerry(PubMaster.Device.GetFerrys());
+                //mDicPack.AddFerry(PubMaster.Device.GetFerrys());
 
                 #endregion
             }
+            mDicPack.AddVersion(DicTag.PDA_INIT_VERSION, PubMaster.Dic.GetDtlIntCode(DicTag.PDA_INIT_VERSION));
             SendSucc2Rf(msg.MEID, FunTag.QueryDicAll, JsonTool.Serialize(mDicPack));
         }
 
@@ -906,8 +942,14 @@ namespace task.rf
                 if (pack != null && pack.Id > 0// && pack.Value1 > 0
                     )
                 {
-                    PubTask.Ferry.StopFerry(pack.Id,out string result);
-                    SendSucc2Rf(msg.MEID, FunTag.TaskFerryStop, result);
+                    if(PubTask.Ferry.StopFerry(pack.Id,out string result))
+                    {
+                        SendSucc2Rf(msg.MEID, FunTag.TaskFerryStop, result);
+                    }
+                    else
+                    {
+                        SendFail2Rf(msg.MEID, FunTag.TaskFerryStop, result);
+                    }
                 }
             }
         }
@@ -924,8 +966,14 @@ namespace task.rf
                     {
                         type = DevFerryResetPosE.后退复位;
                     }
-                    PubTask.Ferry.ReSetFerry(pack.Id, type,  out string result);
-                    SendSucc2Rf(msg.MEID, FunTag.TaskFerryStop, result);
+                    if (PubTask.Ferry.ReSetFerry(pack.Id, type, out string result))
+                    {
+                        SendSucc2Rf(msg.MEID, FunTag.TaskFerryReset, result);
+                    }
+                    else
+                    {
+                        SendFail2Rf(msg.MEID, FunTag.TaskFerryReset, result);
+                    }
                 }
             }
         }
@@ -969,6 +1017,7 @@ namespace task.rf
         {
             DictionPack dic = new DictionPack();
             dic.AddGood(PubMaster.Goods.GetGoodsList());
+            dic.AddVersion(DicTag.PDA_GOOD_VERSION, PubMaster.Dic.GetDtlIntCode(DicTag.PDA_GOOD_VERSION));
             SendSuc2AllRf(FunTag.UpdateGoodDic, JsonTool.Serialize(dic));
         }
         #endregion
@@ -991,7 +1040,7 @@ namespace task.rf
                 if (PubMaster.Device.SetTileLifterGoods(pack.TileId, pack.GoodId))
                 {
                     PubTask.TileLifter.UpdateTileLifterGoods(pack.TileId, pack.GoodId);
-                    SendSucc2Rf(msg.MEID, FunTag.UpdateTileGood, "");
+                    SendSucc2Rf(msg.MEID, FunTag.UpdateTileGood, pack.GoodId+"");
                 }
             }
         }
@@ -1008,6 +1057,25 @@ namespace task.rf
 
         #region[轨道]
 
+        private void QuerySingleTrack(RfMsgMod msg)
+        {
+            if (msg.IsPackHaveData())
+            {
+                if(uint.TryParse(msg.Pack.Data, out uint trackid))
+                {
+                    Track track = PubMaster.Track.GetTrack(trackid);
+                    if (track != null)
+                    {
+                        SendSucc2Rf(msg.MEID, FunTag.QuerySingleTrack, JsonTool.Serialize(track));
+                    }
+                    else
+                    {
+                        SendFail2Rf(msg.MEID, FunTag.QuerySingleTrack, "找不到轨道信息：" + trackid);
+                    }
+                }
+            }
+        }
+        
         private void GetTrack(RfMsgMod msg)
         {
             TrackPack pack = new TrackPack();
@@ -1133,7 +1201,6 @@ namespace task.rf
             }
         }
 
-
         private void UpdateDevWorking(RfMsgMod msg)
         {
             RfDeviceWorkPack pack = JsonTool.Deserialize<RfDeviceWorkPack>(msg.Pack.Data);
@@ -1250,7 +1317,6 @@ namespace task.rf
 
             SendSucc2Rf(msg.MEID, FunTag.QueryTrans, data);
         }
-
 
         private void DoCancelTrans(RfMsgMod msg)
         {

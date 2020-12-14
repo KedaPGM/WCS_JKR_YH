@@ -80,7 +80,8 @@ namespace task.trans
                             if (isnotload)
                             {
                                 //摆渡车接车
-                                if (LockFerryAndAction(trans, trans.take_ferry_id, track.id, track.id, out string _, true))
+                                if (LockFerryAndAction(trans, trans.take_ferry_id, track.id, track.id, out string _, true)
+                                    && PubTask.Carrier.IsStopFTask(trans.carrier_id))
                                 {
                                     PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.后退至摆渡车);
                                 }
@@ -206,7 +207,8 @@ namespace task.trans
                         case TrackTypeE.下砖轨道:
                             if (isload)
                             {
-                                if (LockFerryAndAction(trans, trans.give_ferry_id, track.id, track.id, out string _, true))
+                                if (LockFerryAndAction(trans, trans.give_ferry_id, track.id, track.id, out string _, true)
+                                    && PubTask.Carrier.IsStopFTask(trans.carrier_id))
                                 {
                                     PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.前进至摆渡车);
                                 }
@@ -260,7 +262,8 @@ namespace task.trans
 
                                     //摆渡车 定位去 放货点
                                     //小车到达摆渡车后短暂等待再开始定位
-                                    if (LockFerryAndAction(trans, trans.give_ferry_id, trans.give_track_id, track.id, out string _))
+                                    if (LockFerryAndAction(trans, trans.give_ferry_id, trans.give_track_id, track.id, out string _)
+                                        && PubTask.Carrier.IsStopFTask(trans.carrier_id))
                                     {
                                         PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.前进放砖);
                                     }
@@ -520,7 +523,8 @@ namespace task.trans
                                     {
                                         SetLoadTime(trans);
                                         //摆渡车接车
-                                        if (LockFerryAndAction(trans, trans.take_ferry_id, track.id, track.id, out string _, true))
+                                        if (LockFerryAndAction(trans, trans.take_ferry_id, track.id, track.id, out string _, true)
+                                            && PubTask.Carrier.IsStopFTask(trans.carrier_id))
                                         {
                                             PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.前进至摆渡车);
                                         }
@@ -577,7 +581,8 @@ namespace task.trans
                                 if (isnotload)
                                 {
                                     //摆渡车接车
-                                    if (LockFerryAndAction(trans, trans.take_ferry_id, track.id, track.id, out string _, true))
+                                    if (LockFerryAndAction(trans, trans.take_ferry_id, track.id, track.id, out string _, true)
+                                        && PubTask.Carrier.IsStopFTask(trans.carrier_id))
                                     {
                                         PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.前进至摆渡车);
                                     }
@@ -717,9 +722,20 @@ namespace task.trans
                         case TrackTypeE.上砖轨道:
                             if (isnotload)
                             {
-                                if (LockFerryAndAction(trans, trans.give_ferry_id, track.id, track.id, out string _, true))
+                                //发送离开给上砖机
+                                if (!trans.IsLeaveTileLifter
+                                    && PubTask.TileLifter.DoInvLeave(trans.tilelifter_id, trans.give_track_id))
                                 {
-                                    PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.后退至摆渡车);
+                                    trans.IsLeaveTileLifter = true;
+                                }
+
+                                if (trans.give_ferry_id != 0)
+                                {
+                                    if (LockFerryAndAction(trans, trans.give_ferry_id, track.id, track.id, out string _, true)
+                                        && PubTask.Carrier.IsStopFTask(trans.carrier_id))
+                                    {
+                                        PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.后退至摆渡车);
+                                    }
                                 }
                             }
                             break;
@@ -823,7 +839,8 @@ namespace task.trans
                                     {
                                         //摆渡车 定位去 取货点继续取砖
                                         //小车到达摆渡车后短暂等待再开始定位
-                                        if (LockFerryAndAction(trans, trans.give_ferry_id, trans.finish_track_id, track.id, out string _))
+                                        if (LockFerryAndAction(trans, trans.give_ferry_id, trans.finish_track_id, track.id, out string _)
+                                            && PubTask.Carrier.IsStopFTask(trans.carrier_id))
                                         {
                                             if (!PubMaster.Track.IsEmtpy(trans.finish_track_id))
                                             {

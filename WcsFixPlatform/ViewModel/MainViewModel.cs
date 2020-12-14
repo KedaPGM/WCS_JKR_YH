@@ -4,6 +4,9 @@ using GalaSoft.MvvmLight.Command;
 using GalaSoft.MvvmLight.Messaging;
 using HandyControl.Controls;
 using HandyControl.Data;
+using module.msg;
+using module.role;
+using resource;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,207 +14,18 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using wcs.Data.Model;
-using wcs.Lang;
 using wcs.Service;
 using wcs.Tools;
 
 namespace wcs.ViewModel
 {
-
     public class MainViewModel : ViewModelBase
     {
-        #region[菜单]
-
-        private void AddMenu(bool showquery, bool showsetting)
-        {
-            MenuList.Clear();
-
-            //MenuModel home = new MenuModel()
-            //{
-            //    Name = "主页",
-            //    IKey = "Home",
-            //    OpenPage = true
-            //};
-            //MenuList.Add(home);
-            MenuModel task = new MenuModel()
-            {
-                Name = "任务",
-                IKey = "",
-                OpenPage = false,
-                MenuList = new List<MenuModel>()
-                {
-                    new MenuModel()
-                    {
-                        Name = "开关",
-                        IKey = "AreaSwitch",
-                        OpenPage = true
-                    },
-                    new MenuModel()
-                    {
-                        Name = "任务",
-                        IKey = "Trans",
-                        OpenPage = true
-                    },
-                    //new MenuModel()
-                    //{
-                    //    Name = "按轨出库",
-                    //    IKey = "TileTrack",
-                    //    OpenPage = true
-                    //}
-
-                }
-            };
-            MenuList.Add(task);
-
-            MenuModel device = new MenuModel()
-            {
-                Name = "设备",
-                IKey = "",
-                OpenPage = false,
-                MenuList = new List<MenuModel>()
-                {
-                    new MenuModel()
-                    {
-                        Name = "砖机",
-                        IKey = "TileLifter",
-                        OpenPage = true
-                    },
-                    new MenuModel()
-                    {
-                        Name = "摆渡车",
-                        IKey = "Ferry",
-                        OpenPage = true
-                    },
-                    new MenuModel()
-                    {
-                        Name = "运输车",
-                        IKey = "Carrier",
-                        OpenPage = true
-                    },new MenuModel()
-                    {
-                        Name = "轨道",
-                        IKey = "Track",
-                        OpenPage = true,
-                    }
-                    //,
-                    //new MenuModel()
-                    //{
-                    //    Name = "平板",
-                    //    IKey = "RfClient",
-                    //    OpenPage = true
-                    //}
-                }
-            };
-            MenuList.Add(device);
-
-            MenuModel good = new MenuModel()
-            {
-                Name = "统计",
-                IKey = "",
-                OpenPage = false,
-                MenuList = new List<MenuModel>()
-                {
-                    new MenuModel()
-                    {
-                        Name = "规格",
-                        IKey = "Goods",
-                        OpenPage = true
-                    },new MenuModel()
-                    {
-                        Name = "库存",
-                        IKey = "StockSum",
-                        OpenPage = true
-                    },new MenuModel()
-                    {
-                        Name = "轨道",
-                        IKey = "Stock",
-                        OpenPage = true
-                    }
-                }
-            };
-            MenuList.Add(good);
-
-            MenuModel set = new MenuModel()
-            {
-                Name = "设置",
-                IKey = "",
-                OpenPage = false,
-                MenuList = new List<MenuModel>()
-                {
-                   new MenuModel()
-                    {
-                        Name = "轨道分配",
-                        IKey = "TrackAllocate",
-                        OpenPage = true
-                    },
-                    new MenuModel()
-                    {
-                        Name = "摆渡对位",
-                        IKey = "FerryPos",
-                        OpenPage = true
-                    },
-                    new MenuModel()
-                    {
-                        Name = "区域配置",
-                        IKey = "Area",
-                        OpenPage = true
-                    },
-                    //new MenuModel()
-                    //{
-                    //    Name = "字典",
-                    //    IKey = "Diction",
-                    //    OpenPage = true
-                    //},
-                   // new MenuModel()
-                   // {
-                   //     Name = "测可入砖",
-                   //     IKey = "TestGood",
-                   //     OpenPage = true
-                   // },
-                   //new MenuModel()
-                   // {
-                   //     Name = "添加任务",
-                   //     IKey = "AddManualTrans",
-                   //     OpenPage = true
-                   // }
-                }
-            };
-            MenuList.Add(set);
-
-            MenuModel log = new MenuModel()
-            {
-                Name = "记录",
-                IKey = "",
-                OpenPage = false,
-                MenuList = new List<MenuModel>()
-                {
-                    new MenuModel()
-                    {
-                        Name ="警告",
-                        OpenPage = true,
-                        IKey = "WarnLog"
-                    },
-                    new MenuModel()
-                    {
-                        Name ="空满轨道",
-                        OpenPage = true,
-                        IKey = "TrackLog"
-                    },
-                }
-            };
-
-            MenuList.Add(log);
-        }
-
-        #endregion
-
         #region[字段]
 
         private int _selectTabIndex;
 
         private ObservableCollection<TabItemModel> _tablist = new ObservableCollection<TabItemModel>();
-
-        private readonly List<WinCtlModel> WinCtlList = new List<WinCtlModel>();
 
         private bool _showTabClose = false;
 
@@ -219,52 +33,14 @@ namespace wcs.ViewModel
         /// 数据列表
         /// </summary>
         private ObservableCollection<MenuModel> _menuList;
-        private string winmsg = "";
         #endregion
         public MainViewModel(DataService dataService)
         {
-            WinCtlList.AddRange(dataService.GetWinCtlData());
             MenuList = new ObservableCollection<MenuModel>();
-            AddMenu(true, true);
 
-            //Messenger.Default.Register<MsgAction>(this, MsgToken.OperationUpdate, OperationUpdate);
-            //Messenger.Default.Register<MsgAction>(this, MsgToken.WindowMsgShow, WindowMsgShow);
-            SideMenuItemSelect("Home");
+            Messenger.Default.Register<MsgAction>(this, MsgToken.OperateGrandUpdate, OperateGrandUpdate);
         }
 
-        ///// <summary>
-        ///// 展示提示信息
-        ///// </summary>
-        ///// <param name="msg"></param>
-        //private void WindowMsgShow(MsgAction msg)
-        //{
-        //    if (!PubMaster.MDic.IsSwitchOn(DictionCode.ShowWinMsg)) return;
-        //    Application.Current.Dispatcher.Invoke(() =>
-        //    {
-        //        if (msg.p1 is MsgTypeE type && msg.p2 is string content && msg.p3 is int id)
-        //        {
-        //            if (winmsg.Equals(content)) return;
-        //            winmsg = content;
-        //            switch (type)
-        //            {
-        //                case MsgTypeE.Info:
-        //                    Growl.Info(content);
-        //                    break;
-        //                case MsgTypeE.Waring:
-        //                    Growl.Warning(content);
-        //                    break;
-        //                case MsgTypeE.Error:
-        //                    Growl.Error(content);
-        //                    break;
-        //                case MsgTypeE.Success:
-        //                    Growl.Success(content);
-        //                    break;
-        //                default:
-        //                    break;
-        //            }
-        //        }
-        //    });
-        //}
 
         #region[属性]
 
@@ -308,10 +84,53 @@ namespace wcs.ViewModel
 
         #region[方法]
 
-        private WinCtlModel GetWinCtlModel(string key)
+
+        //登陆/登出 认证
+        private void OperateGrandUpdate(MsgAction obj)
         {
-            return WinCtlList?.Find(c => c.Key.Equals(key)) ?? null;
+            if (obj == null) return;
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if(obj.o1 is WcsUser user)
+                {
+                    RefreshMenu(user.username, user.password);
+                }
+
+                //确保有用户guest的信息
+                if(obj.o1 is bool islogout && islogout)
+                {
+                    RefreshMenu("guest", "guest");
+                }
+            });
         }
+
+        #region[菜单]
+
+        private void RefreshMenu(string username, string password)
+        {
+            MenuList.Clear();
+            List<MenuModel> menulist = PubMaster.Role.GetMenu(out string result, username, password);
+            foreach (MenuModel item in menulist)
+            {
+                MenuList.Add(item);
+            }
+
+            List<string> closetabkeys = new List<string>();
+            foreach (var item in TabList)
+            {
+                if(!menulist.Exists(c=>item.Key.Equals(c.IKey) || c.ExistDtl(item.Key)))
+                {
+                    closetabkeys.Add(item.Key);
+                }
+            }
+
+            foreach (var item in closetabkeys)
+            {
+                CloseTab(item);
+            }
+        }
+
+        #endregion
 
         /// <summary>
         /// 按钮菜单切换
@@ -335,8 +154,6 @@ namespace wcs.ViewModel
             TabItemModel tab = TabList.FirstOrDefault(c => c.Key.Equals(key));
             if (tab != null)
             {
-                //SelectedTabIndex = TabList.IndexOf(tab);
-
                 int i = TabList.IndexOf(tab);
                 if (i >= 3)
                 {
@@ -379,22 +196,23 @@ namespace wcs.ViewModel
             //    Growl.Warning("【请先关闭多余的窗口！】");
             //    return;
             //}
-            WinCtlModel model = GetWinCtlModel(key);
+            //WinCtlModel model = GetWinCtlModel(key);
+            WcsModule model = PubMaster.Role.GetWcsModule(key);
             if (model != null)
             {
                 try
                 {
-                    var obj = AssemblyHelper.ResolveByKey(model.WinCtlName);
-                    var ctl = obj ?? AssemblyHelper.CreateInternalInstance($"window.{model.WinCtlName}", model.WinCtlName);
+                    var obj = AssemblyHelper.ResolveByKey(model.winctlname);
+                    var ctl = obj ?? AssemblyHelper.CreateInternalInstance($"window.{model.winctlname}", model.winctlname);
                     if (ctl != null)
                     {
-                        //TabList.Add(new TabItemModel()
                         TabList.Insert(0, new TabItemModel()
                         {
+                            Id = model.id,
                             Key = key,
-                            Name = MLang.GetLang(model.Name),
-                            Geometry = model.Geometry,
-                            GColor = model.Brush,
+                            Name = model.name,//MLang.GetLang(model.Name),
+                            Geometry = model.geometry,
+                            GColor = model.brush,
                             SubContent = ctl
                         });
 
@@ -403,12 +221,12 @@ namespace wcs.ViewModel
                     }
                     else
                     {
-                        Growl.Error("加载窗口文件" + model.WinCtlName + "出错!\n");
+                        Growl.Error("加载窗口文件" + model.winctlname + "出错!\n");
                     }
                 }
                 catch (Exception e)
                 {
-                    Growl.Error("加载窗口文件" + model.WinCtlName + "出错!\n" + e.Message);
+                    Growl.Error("加载窗口文件" + model.winctlname + "出错!\n" + e.Message);
                 }
             }
             else
@@ -447,29 +265,6 @@ namespace wcs.ViewModel
                 ShowTabCloseBtn = false;
             }
         }
-
-        //private void OperationUpdate(MsgAction msg)
-        //{
-        //    if (msg.p1 is bool grand)
-        //    {
-        //        if (msg.p2 is string user && msg.p3 is bool showquery && msg.p4 is bool showsetting)
-        //        {
-        //            if (grand && !string.IsNullOrEmpty(user))
-        //            {
-        //                AddMenu(showquery, showsetting);
-        //            }
-        //        }
-
-        //        if (!grand)
-        //        {
-        //            AddMenu(false, false);
-        //            CloseTab("AgvLogQuery");
-        //            CloseTab("SiteLogQuery");
-        //            CloseTab("Switch");
-        //            CloseTab("Dictionary");
-        //        }
-        //    }
-        //}
 
         private void MenuTreeViewChange(RoutedEventArgs orgs)
         {

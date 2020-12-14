@@ -9,6 +9,8 @@
         public const string Empty = nameof(Empty);
         public const string Login = nameof(Login);
         public const string ModuleView = nameof(ModuleView);
+        public const string QueryVersion = nameof(QueryVersion);
+        public const string InitVersion = nameof(InitVersion);
         #endregion
 
         #region[数字字典]
@@ -23,6 +25,7 @@
         public const string QueryGoods = nameof(QueryGoods);
         public const string QueryStock = nameof(QueryStock);
         public const string QueryTrack = nameof(QueryTrack);
+        public const string QuerySingleTrack = nameof(QuerySingleTrack);
 
         public const string QueryTileGood = nameof(QueryTileGood);
         #endregion

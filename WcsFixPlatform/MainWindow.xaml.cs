@@ -1,6 +1,7 @@
 ﻿using HandyControl.Controls;
 using HandyControl.Tools.Extension;
 using module.msg;
+using module.role;
 using resource;
 using System;
 using System.ComponentModel;
@@ -8,21 +9,31 @@ using System.Windows;
 using task;
 using tool.mlog;
 using wcs.Dialog;
+using wcs.toolbar;
 using wcs.ViewModel;
 using wcs.window;
 
 namespace wcs
 {
     /// <summary>
-    /// MainWindow.xaml 的交互逻辑
+    /// NewMainWindow.xaml 的交互逻辑
     /// </summary>
     public partial class MainWindow
     {
+
         private Log mLog;
         public MainWindow()
         {
             InitializeComponent();
             mLog = (Log)new LogFactory().GetLog("系统", false);
+        }
+
+
+        protected override void OnContentRendered(EventArgs e)
+        {
+            base.OnContentRendered(e);
+
+            NonClientAreaContent = new MainToolBarCtl();
         }
 
 
@@ -33,27 +44,12 @@ namespace wcs
         /// <param name="e"></param>
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            
             try
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     e.Cancel = true;
                     ShowQuitDialogAsync();
-                    //MessageBoxResult result = HandyControl.Controls.MessageBox.Show("是否退出程序！", "警告", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-
-                    //if (result == MessageBoxResult.Yes)
-                    //{
-                    //    mLog.Status(true, "调度关闭");
-                    //    PubMaster.Warn.Stop();
-                    //    PubTask.Stop();
-                    //    PubMaster.StopMaster();
-                    //    Environment.Exit(0);
-                    //}
-                    //else
-                    //{
-                    //    e.Cancel = true;
-                    //}
                 });
             }
             catch (Exception ex)
@@ -66,18 +62,33 @@ namespace wcs
         {
             MsgAction result = await HandyControl.Controls.Dialog.Show<OperateGrandDialog>()
                     .Initialize<OperateGrandDialogViewModel>((vm) => { vm.Clear(); vm.SetDialog(true); }).GetResultAsync<MsgAction>();
-            if (result.o1 is string password)
+            if(result.o1 is null)
             {
-                if (!"123456".Equals(password))
+                Growl.Error("退出失败，认证错误！");
+                return;
+            }
+
+            if(result.o1 is int cint)
+            {
+                return;
+            }
+            
+            if (result.o1 is WcsUser user)
+            {
+                if (user.exitwcs)
                 {
-                    Growl.Error("退出失败，认证密码错误！");
+                    mLog.Status(true, "调度关闭：" + user.name);
+                    PubMaster.Warn.Stop();
+                    PubTask.Stop();
+                    PubMaster.StopMaster();
+                    Environment.Exit(0);
                     return;
                 }
-                mLog.Status(true, "调度关闭");
-                PubMaster.Warn.Stop();
-                PubTask.Stop();
-                PubMaster.StopMaster();
-                Environment.Exit(0);
+                else
+                {
+                    mLog.Status(true, user.name + "：没有退出调度的权限！");
+                }
+                Growl.Error(user.name + "：没有退出调度的权限！");
             }
         }
 

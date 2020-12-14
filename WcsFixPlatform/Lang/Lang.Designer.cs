@@ -142,6 +142,15 @@ namespace wcs.Lang {
         }
         
         /// <summary>
+        ///   查找类似 菜单 的本地化字符串。
+        /// </summary>
+        internal static string Menu {
+            get {
+                return ResourceManager.GetString("Menu", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 平板 的本地化字符串。
         /// </summary>
         internal static string RfClient {
