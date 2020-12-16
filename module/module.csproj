@@ -69,6 +69,8 @@
     <Compile Include="rf\carrier\DevCarrierPack.cs" />
     <Compile Include="rf\carrier\RfDevCarrier.cs" />
     <Compile Include="rf\device\RfDevicePack.cs" />
+    <Compile Include="rf\device\RfTileGoodPack.cs" />
+    <Compile Include="rf\device\RfTileShiftPack.cs" />
     <Compile Include="rf\dic\DictionItem.cs" />
     <Compile Include="rf\ferry\DevFerryPack.cs" />
     <Compile Include="rf\ferry\FerryNewPosPack.cs" />

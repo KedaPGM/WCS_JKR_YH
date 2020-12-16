@@ -25,8 +25,8 @@ namespace resource.module.modulesql
                 " t.goods_id, t.left_track_id, t.right_track_id, " +
                 "t.brother_dev_id, t.strategy_in, t.strategy_out, " +
                 "t.memo, t.area, t.offlinetime, t.a_givemisstrack, " +
-                "t.a_takemisstrack, t.a_poweroff, t.a_alert_track, t.do_work, t.work_type " +
-                "FROM device AS t ORDER BY t.`order` ASC");
+                "t.a_takemisstrack, t.a_poweroff, t.a_alert_track, t.do_work, t.work_type, " +
+                "t.old_goodid, t.pre_goodid, t.do_shift, t.left_goods, t.right_goods FROM device AS t ORDER BY t.`order` ASC");
             DataTable dt = mSql.ExecuteQuery(@sql);
             if (!mSql.IsNoData(dt))
             {
@@ -91,6 +91,15 @@ namespace resource.module.modulesql
                 dev.att1, dev.att2, GetIntOrNull(dev.goods_id),
                 GetIntOrNull(dev.left_track_id), GetIntOrNull(dev.right_track_id),
                 dev.memo, dev.brother_dev_id, dev.strategy_in, dev.strategy_out, dev.area, dev.do_work, dev.work_type, dev.id);
+            int row = mSql.ExcuteSql(sql);
+            return row >= 1;
+        }
+
+        internal bool EditeTileGood(Device dev)
+        {
+            string sql = "UPDATE `device` set `goods_id` = '{0}', `old_goodid` = '{1}'," +
+                   " `pre_goodid` = '{2}', do_shift = {3}, left_goods = {4}, right_goods = {5} where id = '{6}'";
+            sql = string.Format(sql, GetIntOrNull(dev.goods_id), dev.old_goodid, dev.pre_goodid, dev.do_shift, dev.left_goods, dev.right_goods, dev.id);
             int row = mSql.ExcuteSql(sql);
             return row >= 1;
         }

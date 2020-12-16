@@ -20,6 +20,10 @@ namespace socket.process
         public byte Involve1;      //介入状态1 左
         public byte Involve2;      //介入状态2 右
         public byte OperateMode;   //作业模式
+        public byte Goods1;   //工位1品种
+        public byte Goods2;   //工位2品种
+        public byte ShiftStatus;   //转产状态
+        public byte ShiftAccept;   //转产接收状态
         public ushort Tail; //命令字尾【0xFF,0xFE】
     }
 
@@ -32,8 +36,9 @@ namespace socket.process
     {
         public ushort Head; //命令字头【0x90,0x01】
         public byte DeviceID;      //设备号
-        public byte Command;        //故障位1
-        public byte Value;        //故障位2
+        public byte Command;       //控制码
+        public byte Value1;        //值1
+        public byte Value2;        //值2
         public ushort Tail; //命令字尾【0xFF,0xFE】
     }
 
@@ -65,17 +70,22 @@ namespace socket.process
             mDev.Involve1 = st.Involve1 == 1;
             mDev.Involve2 = st.Involve2 == 1;
             mDev.OperateMode = (DevOperateModeE)st.OperateMode;
+            mDev.Goods1 = (DevLifterGoodsE)st.Goods1;
+            mDev.Goods2 = (DevLifterGoodsE)st.Goods2;
+            mDev.ShiftStatus = (TileShiftStatusE)st.ShiftStatus;
+            mDev.ShiftAccept = st.ShiftAccept == 1;
 
             return mDev;
         }
 
-        internal byte[] GetCmd(string devid, DevLifterCmdTypeE type, byte value)
+        internal byte[] GetCmd(string devid, DevLifterCmdTypeE type, byte value1, byte value2)
         {
             TileCmdStruct cmd = new TileCmdStruct();
             cmd.Head = ShiftBytes(SocketConst.TILELIFTER_CMD_HEAD_KEY);
             cmd.DeviceID = byte.Parse(devid);
             cmd.Command = (byte)type;
-            cmd.Value = value;
+            cmd.Value1 = value1;
+            cmd.Value2 = value2;
             cmd.Tail = ShiftBytes(SocketConst.TAIL_KEY);
 
             return StructToBuffer(cmd);

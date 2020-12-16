@@ -91,6 +91,8 @@ namespace task.task
             get => IsNeed_1 || IsNeed_2;
         }
 
+        public TileShiftStatusE TileShiftStatus { set; get; }
+
         public bool StopOneTime { set; get; }
 
         #endregion
@@ -157,17 +159,22 @@ namespace task.task
 
         internal void DoQuery()
         {
-            DevTcp?.SendCmd(DevLifterCmdTypeE.查询, 0);
+            DevTcp?.SendCmd(DevLifterCmdTypeE.查询, 0, 0);
         }
 
         internal void Do1Invo(DevLifterInvolE invo)
         {
-            DevTcp?.SendCmd(DevLifterCmdTypeE.介入1, (byte)invo);
+            DevTcp?.SendCmd(DevLifterCmdTypeE.介入1, (byte)invo, 0);
         }
 
         internal void Do2Invo(DevLifterInvolE invo)
         {
-            DevTcp?.SendCmd(DevLifterCmdTypeE.介入2, (byte)invo);
+            DevTcp?.SendCmd(DevLifterCmdTypeE.介入2, (byte)invo, 0);
+        }
+
+        internal void DoShift(TileShiftStatusE ts, int count = 0)
+        {
+            DevTcp?.SendCmd(DevLifterCmdTypeE.转产, (byte)ts, (byte)count);
         }
 
         internal void SetInTaskStatus(bool status)

@@ -26,9 +26,9 @@ namespace socket.tcp
 
         #region[发送信息]
 
-        public void SendCmd(DevLifterCmdTypeE type, byte value)
+        public void SendCmd(DevLifterCmdTypeE type, byte value1, byte value2)
         {
-            byte[] data = mProcess.GetCmd(mDev.memo, type, value);
+            byte[] data = mProcess.GetCmd(mDev.memo, type, value1, value2);
             SendMessage(data);
         }
 

@@ -63,6 +63,11 @@ namespace resource.track
             return TrackList;
         }
 
+        public List<Track> GetTrackList(List<TrackTypeE> types)
+        {
+            return TrackList.FindAll(c => types.Contains(c.Type));
+        }
+
         public List<Track> GetTrackList(uint areaid)
         {
             return TrackList.FindAll(c => c.area == areaid);

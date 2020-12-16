@@ -30,6 +30,24 @@ namespace module.device
         public bool do_work { set; get; }//是否作业
         public byte work_type { set; get; }//作业类型
 
+        public uint old_goodid { set; get; }//上一个品种
+        public uint pre_goodid { set; get; }//预设品种
+        public bool do_shift { set; get; }//是否转产
+        public byte left_goods { set; get; }//工位品种 左
+        public byte right_goods { set; get; }//工位品种 右
+
+        public DevLifterGoodsE LeftGoods
+        {
+            get => (DevLifterGoodsE)left_goods;
+            set => left_goods = (byte)value;
+        }
+
+        public DevLifterGoodsE RightGoods
+        {
+            get => (DevLifterGoodsE)right_goods;
+            set => right_goods = (byte)value;
+        }
+
         public DevWorkTypeE WorkType
         {
             get => (DevWorkTypeE)work_type;

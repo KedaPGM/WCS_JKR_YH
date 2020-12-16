@@ -15,6 +15,10 @@ namespace module.device
         private bool isinvolve1;      //介入状态1 左
         private bool isinvolve2;      //介入状态2 右
         private byte operatemode;   //作业模式
+        private byte goods1;   //工位1品种
+        private byte goods2;   //工位2品种
+        private byte shiftstatus;   //转产状态
+        private bool shiftaccept;   //转产接收状态
         #endregion
 
         #region[属性]
@@ -77,14 +81,38 @@ namespace module.device
             get => (DevOperateModeE)operatemode;
         }
 
+        public DevLifterGoodsE Goods1//工位1品种 左
+        {
+            set => Set(ref goods1, (byte)value);
+            get => (DevLifterGoodsE)goods1;
+        }
+
+        public DevLifterGoodsE Goods2//工位2品种 右
+        {
+            set => Set(ref goods2, (byte)value);
+            get => (DevLifterGoodsE)goods2;
+        }
+
+        public TileShiftStatusE ShiftStatus//转产状态
+        {
+            set => Set(ref shiftstatus, (byte)value);
+            get => (TileShiftStatusE)shiftstatus;
+        }
+
+        public bool ShiftAccept//转产接收状态
+        {
+            set => Set(ref shiftaccept, value);
+            get => shiftaccept;
+        }
+
         #endregion
 
         #region[日志]
 
         public override string ToString()
         {
-            return string.Format("货物1：{0}, 货物2：{1}, 需求1：{2}, 需求2：{3}, 满砖：{4}, 现有：{5}, 介入1：{6}, 介入2：{7}, 模式：{8}"
-                   , S(Load1), S(Load2), S(Need1), S(Need2), FullQty, RecentQty, S(Involve1), S(Involve2), OperateMode);
+            return string.Format("货物1：{0}, 货物2：{1}, 需求1：{2}, 需求2：{3}, 满砖：{4}, 现有：{5}, 介入1：{6}, 介入2：{7}, 模式：{8}, 工位1：{9}, 工位2：{10}, 转产：{11}, 转产接收：{12}"
+                   , S(Load1), S(Load2), S(Need1), S(Need2), FullQty, RecentQty, S(Involve1), S(Involve2), OperateMode, Goods1, Goods2, ShiftStatus, S(ShiftAccept));
         }
 
         private string S(bool v)

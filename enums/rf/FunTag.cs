@@ -114,5 +114,14 @@
         public const string UpdateTileTrack = nameof(UpdateTileTrack);
 
         #endregion
+
+
+        #region[转规格]
+        public const string QueryTileShift = nameof(QueryTileShift);//查询砖机转产信息
+
+        public const string UpdatePreGood = nameof(UpdatePreGood);//更新预设品种
+        public const string ShiftTileGood = nameof(ShiftTileGood);//转规格
+
+        #endregion
     }
 }

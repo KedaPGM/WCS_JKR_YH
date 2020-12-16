@@ -127,6 +127,20 @@ namespace resource.device
             return false;
         }
 
+        public bool SetTileLifterGoods(uint devid, DevLifterGoodsE goods1, DevLifterGoodsE goods2)
+        {
+            Device dev = DeviceList.Find(c => c.id == devid);
+            if (dev != null)
+            {
+                dev.old_goodid = 0;
+                dev.LeftGoods = goods1;
+                dev.RightGoods = goods2;
+                PubMaster.Mod.DevSql.EditeTileGood(dev);
+                return true;
+            }
+            return false;
+        }
+
 
 
         public uint GetFerryIdByFerryTrackId(uint ferrytrackid)
@@ -203,5 +217,52 @@ namespace resource.device
 
         #endregion
 
+
+
+        #region[砖机转产]
+
+        public bool UpdateTilePreGood(uint tileid, uint nowgoodid, uint pregoodid, out string result)
+        {
+            Device device = GetDevice(tileid);
+            if (device != null)
+            {
+                if (device.goods_id != nowgoodid)
+                {
+                    result = "请刷新设备信息！";
+                    return false;
+                }
+
+                device.pre_goodid = pregoodid;
+                PubMaster.Mod.DevSql.EditeTileGood(device);
+                result = "";
+                return true;
+            }
+            result = "找不到设备信息！";
+            return false;
+        }
+
+        public bool UpdateShiftTileGood(uint tileid, uint nowgoodid, out string result)
+        {
+            Device device = GetDevice(tileid);
+            if (device != null)
+            {
+                if (device.goods_id != nowgoodid)
+                {
+                    result = "请刷新设备信息！";
+                    return false;
+                }
+                device.old_goodid = device.goods_id;
+                device.goods_id = device.pre_goodid;
+                device.pre_goodid = 0;
+                device.do_shift = true;
+                PubMaster.Mod.DevSql.EditeTileGood(device);
+                result = "";
+                return true;
+            }
+            result = "找不到设备信息！";
+            return false;
+        }
+
+        #endregion
     }
 }
