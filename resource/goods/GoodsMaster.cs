@@ -219,6 +219,11 @@ namespace resource.goods
             return StockList.Exists(c => c.track_id == trackid && c.goods_id == goodid);
         }
 
+        public bool ExistStockInTrackByGid(uint goodid)
+        {
+            return StockList.Exists(c => c.goods_id == goodid &&
+                (c.TrackType == TrackTypeE.储砖_入 || c.TrackType == TrackTypeE.储砖_出 || c.TrackType == TrackTypeE.储砖_出入));
+        }
 
         #endregion
 
@@ -376,6 +381,47 @@ namespace resource.goods
             result = "找不到该品种信息：" + good.name;
             return false;
         }
+
+        public bool DeleteGood(uint goodid, out string result)
+        {
+            if (PubMaster.Device.ExistDevByGid(goodid))
+            {
+                result = "砖机配置了该规格！";
+                return false;
+            }
+
+            if (PubMaster.Goods.ExistStockInTrackByGid(goodid))
+            {
+                result = "储砖库存内有该规格";
+                return false;
+            }
+
+            if (!Monitor.TryEnter(_go, TimeSpan.FromSeconds(2)))
+            {
+                result = "";
+                return false;
+            }
+            try
+            {
+                Goods gs = GetGoods(goodid);
+                if (gs != null)
+                {
+                    DeleteStockByGid(goodid);
+                    Thread.Sleep(500);
+
+                    PubMaster.Mod.GoodSql.DeleteGoods(gs);
+                    GoodsList.Remove(gs);
+                    SendMsg(gs, ActionTypeE.Delete);
+                    result = "删除成功：" + gs.name;
+                    return true;
+                }
+            }
+            finally { Monitor.Exit(_go); }
+
+            result = "删除失败！";
+            return false;
+        }
+
         #endregion
 
         #region[库存]
@@ -440,6 +486,22 @@ namespace resource.goods
             }
             rs = "";
             return true;
+        }
+
+        public void DeleteStockByGid(uint goodid)
+        {
+            List<Stock> stocks = StockList.FindAll(c => c.goods_id == goodid);
+            if (stocks == null || stocks.Count == 0)
+            {
+                return;
+            }
+
+            foreach (Stock s in stocks)
+            {
+                StockList.Remove(s);
+                PubMaster.Mod.GoodSql.DeleteStock(s);
+                StockSumChange(s, 0);
+            }
         }
 
         private byte GetGoodStack(uint goodid)

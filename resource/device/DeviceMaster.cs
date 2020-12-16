@@ -215,6 +215,11 @@ namespace resource.device
             return DevWorkTypeE.规格作业;
         }
 
+        public bool ExistDevByGid(uint goodid)
+        {
+            return DeviceList.Exists(c => c.goods_id == goodid || c.old_goodid == goodid || c.pre_goodid == goodid);
+        }
+
         #endregion
 
 

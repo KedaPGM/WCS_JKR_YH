@@ -93,6 +93,7 @@ namespace wcs.ViewModel
                             List.Remove(view);
                             break;
                     }
+                    GoodListView.Refresh();
                 });
             }
         }
@@ -150,7 +151,20 @@ namespace wcs.ViewModel
                     }
                     break;
                 case "delete":
+                    if (SelectGood == null)
+                    {
+                        Growl.Warning("请先选择规格！");
+                        return;
+                    }
 
+                    if (PubMaster.Goods.DeleteGood(SelectGood.ID, out string res))
+                    {
+                        Growl.Success(res);
+                    }
+                    else
+                    {
+                        Growl.Warning(res);
+                    }
                     break;
             }
         }
