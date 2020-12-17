@@ -318,6 +318,25 @@ namespace task.trans
                             if (PubTask.Carrier.IsCarrierFinishUnLoad(trans.carrier_id))
                             {
                                 SetUnLoadTime(trans);
+
+                                if (!PubMaster.Track.IsTrackFull(trans.give_track_id))
+                                {
+                                    ushort fullqty = PubMaster.Area.GetAreaFullQty(trans.area_id);
+                                    // 600 规格 满砖数-1
+                                    Goods gs = PubMaster.Goods.GetGoods(trans.goods_id);
+                                    if (gs != null && (gs.width == 600 || gs.length == 600))
+                                    {
+                                        fullqty--;
+                                    }
+                                    //当轨道满砖数量库存时就将轨道设为满砖轨道
+                                    if (PubMaster.Goods.GetTrackCount(trans.give_track_id) == fullqty)
+                                    {
+                                        PubMaster.Track.UpdateStockStatus(trans.give_track_id, TrackStockStatusE.满砖, "设定最大库存数,自动满砖");
+                                        PubMaster.Track.AddTrackLog(fullqty, trans.carrier_id, trans.give_track_id, TrackLogE.满轨道, "满足最大库存数");
+                                        return;
+                                    }
+                                }
+
                                 SetStatus(trans, TransStatusE.完成);
                             }
                             #endregion
@@ -331,7 +350,7 @@ namespace task.trans
                 #region[任务完成]
                 case TransStatusE.完成:
 
-                    PubMaster.Goods.MoveStock(trans.stock_id, trans.give_track_id);
+                    //PubMaster.Goods.MoveStock(trans.stock_id, trans.give_track_id);
                     SetFinish(trans);
                     break;
                 #endregion
@@ -1400,7 +1419,7 @@ namespace task.trans
                     PubMaster.Warn.RemoveTraWarn(WarningTypeE.TrackFullButNoneStock, (ushort)track.id);
                 }
 
-                if (TransList.Exists(c => !c.finish && c.take_track_id == track.id))
+                if (TransList.Exists(c => !c.finish && (c.take_track_id == track.id || c.give_track_id == track.id || c.finish_track_id == track.id)))
                 {
                     continue;
                 }

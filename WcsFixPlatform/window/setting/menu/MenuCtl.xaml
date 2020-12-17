@@ -55,6 +55,7 @@
                         <MenuItem Header="添加目录" Tag="AddFolder" Command="{Binding MenuBtnCmd}" CommandParameter="{Binding Tag,RelativeSource={RelativeSource Self}}"/>
                         <MenuItem Header="添加目录功能" Tag="AddModule" Command="{Binding MenuBtnCmd}" CommandParameter="{Binding Tag,RelativeSource={RelativeSource Self}}"/>
                         <MenuItem Header="添加无目录功能" Tag="AddNoneFolderModule" Command="{Binding MenuBtnCmd}" CommandParameter="{Binding Tag,RelativeSource={RelativeSource Self}}"/>
+                        <MenuItem Header="添加平板功能" Tag="AddPDAModule" Command="{Binding MenuBtnCmd}" CommandParameter="{Binding Tag,RelativeSource={RelativeSource Self}}"/>
                     </ContextMenu>
                 </TreeView.ContextMenu>
                 <TreeView.ItemTemplate>
@@ -97,6 +98,7 @@
                         <RowDefinition/>
                         <RowDefinition/>
                         <RowDefinition/>
+                        <RowDefinition/>
                     </Grid.RowDefinitions>
                     <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource MBorder_LT}">
                         <TextBlock Text="名称:" Style="{StaticResource TextBlockLarge}"/>
@@ -109,7 +111,11 @@
                         <TextBlock Text="上级:" Style="{StaticResource TextBlockLarge}"/>
                     </Border>
 
-                    <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource MBorder_LTB}">
+                    <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource MBorder_LT}">
+                        <TextBlock Text="平板:" Style="{StaticResource TextBlockLarge}"/>
+                    </Border>
+
+                    <Border Grid.Row="4" Grid.Column="0" Style="{StaticResource MBorder_LTB}">
                         <TextBlock Text="功能:" Style="{StaticResource TextBlockLarge}"/>
                     </Border>
 
@@ -124,8 +130,12 @@
                     <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource MBorder_LTR}">
                         <TextBlock Text="{Binding FolderName, Mode=TwoWay}" Margin="10" FontSize="25" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
+
+                    <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource MBorder_LTR}" IsEnabled="False">
+                        <CheckBox IsChecked="{Binding IsRf,Mode=TwoWay}" Width="55" Height="45" Style="{StaticResource ToggleButtonSwitch}"/>
+                    </Border>
                     
-                    <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource MBorder_LTRB}">
+                    <Border Grid.Row="4" Grid.Column="1" Style="{StaticResource MBorder_LTRB}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>

@@ -194,6 +194,11 @@ namespace task.device
             return DevList.Exists(c => c.TrackId == trackid);
         }
 
+        internal bool HaveInTrackAndLoad(uint trackid)
+        {
+            return DevList.Exists(c => c.TrackId == trackid && c.Load == DevCarrierLoadE.有货);
+        }
+
         internal bool OnlyOneCarrierInTrack(uint trackid)
         {
             return DevList.Count(c => c.TrackId == trackid) == 1;
@@ -464,7 +469,8 @@ namespace task.device
                     && (givetrack.Type == TrackTypeE.储砖_入 || givetrack.Type == TrackTypeE.储砖_出入))
                 {
                     ushort storecount = PubMaster.Track.AddTrackLog((ushort)task.AreaId, task.ID, givetrack.id, TrackLogE.满轨道, "");
-                    ushort areafullqty = PubMaster.Area.GetAreaFullQty(task.AreaId);
+                    //ushort areafullqty = PubMaster.Area.GetAreaFullQty(task.AreaId);
+                    ushort areafullqty = 8; // 金凯瑞直接8车算了 - -。
                     if(storecount >= areafullqty)
                     {
                         //PubMaster.Track.SetTrackEaryFull(givetrack.id, true, DateTime.Now);

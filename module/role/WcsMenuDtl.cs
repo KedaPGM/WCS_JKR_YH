@@ -9,5 +9,6 @@
         public int folder_id { set; get; }
         public int module_id { set; get; }
         public short order { set; get; }
+        public bool rf { set; get; }
     }
 }

@@ -740,12 +740,23 @@ namespace task.device
                 }
                 #endregion
             }
-            else if (task.Type == DeviceTypeE.下砖机)
+            else
             {
-                //没有需求但是介入状态 同时轨道没有车
-                if (task.IsInvo_1
-                    && !PubTask.Carrier.HaveInTrack(task.LeftTrackId)
-                    && mTimer.IsOver(TimerTag.TileInvoNotNeed, task.ID, Site_1, 20, 10))
+                bool isOK = false;
+                switch (task.Type)
+                {
+                    case DeviceTypeE.上砖机:
+                        isOK = !PubTask.Carrier.HaveInTrackAndLoad(task.LeftTrackId);
+                        break;
+                    case DeviceTypeE.下砖机:
+                        isOK = !PubTask.Carrier.HaveInTrack(task.LeftTrackId);
+                        break;
+                    default:
+                        break;
+                }
+                //没有需求但是介入状态 同时:轨道没有车/有车无货
+                if (task.IsInvo_1 && isOK
+                    && mTimer.IsOver(TimerTag.TileInvoNotNeed, task.ID, Site_1, 15, 10))
                 {
                     if (task.HaveBrother)
                     {
@@ -754,7 +765,6 @@ namespace task.device
                     }
                     else
                     {
-
                         TileLifterTask bro = DevList.Find(c => c.BrotherId == task.ID);
                         if (bro == null || (bro != null && !bro.IsNeed_1))
                         {
@@ -968,12 +978,30 @@ namespace task.device
                 }
                 #endregion
             }
-            else if (task.IsInvo_2 && task.Type == DeviceTypeE.下砖机)
+            else if (task.IsInvo_2)
             {
-                //没有需求但是介入状态 同时轨道没有车
+                bool isOK = false;
+                if (task.RigthTrackId == 0)
+                {
+                    isOK = true;
+                }
+                else
+                {
+                    switch (task.Type)
+                    {
+                        case DeviceTypeE.上砖机:
+                            isOK = !PubTask.Carrier.HaveInTrackAndLoad(task.RigthTrackId);
+                            break;
+                        case DeviceTypeE.下砖机:
+                            isOK = !PubTask.Carrier.HaveInTrack(task.RigthTrackId);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                //没有需求但是介入状态 同时:轨道没有车/有车无货
                 if (task.RigthTrackId == 0
-                    || (!PubTask.Carrier.HaveInTrack(task.RigthTrackId)
-                        && mTimer.IsOver(TimerTag.TileInvoNotNeed, task.ID, Site_2, 20, 10)))
+                    || (isOK && mTimer.IsOver(TimerTag.TileInvoNotNeed, task.ID, Site_2, 15, 10)))
                 {
                     if (task.HaveBrother)
                     {
@@ -982,7 +1010,6 @@ namespace task.device
                     }
                     else
                     {
-
                         TileLifterTask bro = DevList.Find(c => c.BrotherId == task.ID);
                         if (bro == null || (bro != null && !bro.IsNeed_2))
                         {

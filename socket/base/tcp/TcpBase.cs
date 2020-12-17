@@ -139,10 +139,22 @@ namespace socket.tcp
 
         internal void Reconnect()
         {
+            if (mSystemStop)
+            {
+                return;
+            }
+
             // important to disconnect within a timer (different thread) since the call came from
             // one of the threads being closed in the Disconnect() method
             m_RetryTimer = new Timer(delegate (object state)
             {
+                if (IsConnected)
+                {
+                    if (m_RetryTimer != null)
+                        m_RetryTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                    m_RetryTimer = null;
+                    return;
+                }
                 m_RetryTimer = null;
                 Disconnect();
                 Connect();

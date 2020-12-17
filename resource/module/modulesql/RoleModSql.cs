@@ -45,7 +45,7 @@ namespace resource.module.modulesql
         {
             List<WcsMenuDtl> list = new List<WcsMenuDtl>();
             string sql = string.Format("SELECT t.id, t.menu_id, t.`name`, t.folder, t.folder_id, t.module_id, " +
-                "t.`order` FROM wcs_menu_dtl AS t ORDER BY t.`order` ASC ");
+                "t.`order`, t.`rf` FROM wcs_menu_dtl AS t ORDER BY t.`order` ASC ");
             DataTable dt = mSql.ExecuteQuery(@sql);
             if (!mSql.IsNoData(dt))
             {
@@ -103,10 +103,10 @@ namespace resource.module.modulesql
 
         internal void AddWcsMenuDtl(WcsMenuDtl dtl)
         {
-            string str = "INSERT INTO `wcs_menu_dtl`(`id`, `menu_id`, `name`, `folder`, `folder_id`, `module_id`, `order`)" +
-                " VALUES ({0}, {1}, '{2}', {3}, {4}, {5}, {6})";
+            string str = "INSERT INTO `wcs_menu_dtl`(`id`, `menu_id`, `name`, `folder`, `folder_id`, `module_id`, `order`, `rf`)" +
+                " VALUES ({0}, {1}, '{2}', {3}, {4}, {5}, {6}, {7})";
             string sql = string.Format(str, dtl.id, dtl.menu_id, dtl.name,
-                dtl.folder, dtl.folder_id, dtl.module_id, dtl.order);
+                dtl.folder, dtl.folder_id, dtl.module_id, dtl.order, dtl.rf);
             int row = mSql.ExcuteSql(sql);
         }
 
@@ -135,8 +135,8 @@ namespace resource.module.modulesql
         internal bool EditeWcsMenuDtl(WcsMenuDtl dtl)
         {
             string sql = "UPDATE `wcs_menu_dtl` SET `menu_id` = {0}, `name` = '{1}'," +
-                " `folder` = {2}, `folder_id` = {3}, `module_id` = {4}, `order` = {5} WHERE `id` = {6}";
-            sql = string.Format(sql, dtl.menu_id, dtl.name, dtl.folder, dtl.folder_id, dtl.module_id, dtl.order, dtl.id);
+                " `folder` = {2}, `folder_id` = {3}, `module_id` = {4}, `order` = {5}, `rf` = {6} WHERE `id` = {7}";
+            sql = string.Format(sql, dtl.menu_id, dtl.name, dtl.folder, dtl.folder_id, dtl.module_id, dtl.order, dtl.rf, dtl.id);
             int row = mSql.ExcuteSql(sql);
             return row >= 1;
         }

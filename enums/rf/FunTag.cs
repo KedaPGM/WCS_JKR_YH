@@ -11,6 +11,7 @@
         public const string ModuleView = nameof(ModuleView);
         public const string QueryVersion = nameof(QueryVersion);
         public const string InitVersion = nameof(InitVersion);
+        public const string UserCheck = nameof(UserCheck);
         #endregion
 
         #region[数字字典]

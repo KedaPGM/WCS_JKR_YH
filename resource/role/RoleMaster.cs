@@ -1,6 +1,6 @@
 ﻿using enums;
+using module.rf;
 using module.role;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -231,6 +231,62 @@ namespace resource.role
             return PubMaster.Mod.RoleSql.EditeWcsUser(ouser);
         }
 
+
+        /// <summary>
+        /// 用户登陆/获取用户授权模块
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <param name="result"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public bool CheckUserGetPdaView(string username, string password, out string result, out UserModelPack user)
+        {
+            user = null;
+            if (username == null || string.IsNullOrEmpty(username))
+            {
+                result = "用户名不能为空！";
+                return false;
+            }
+
+            if (password == null || string.IsNullOrEmpty(password))
+            {
+                result = "密码不能为空！";
+                return false;
+            }
+
+            WcsUser wcsuser = GetUser(username, password);
+            if (wcsuser == null)
+            {
+                result = "账号密码错误！";
+                return false;
+            }
+
+            WcsRole userrole = GetUserRole(username, password);
+            if(userrole == null)
+            {
+                result = "用户没有配置角色！";
+                return false;
+            }
+
+            if(userrole.menu_id == 0)
+            {
+                result = "用户角色没有配置菜单！";
+                return false;
+            }
+
+            user = GetPDAMenu(userrole);
+            if(user != null)
+            {
+                user.UserId = wcsuser.id+"";
+                user.UserName = wcsuser.name;
+                result = "";
+                return true;
+            }
+
+            result = "";
+            return false;
+        }
         #endregion
 
         #region[角色管理]
@@ -507,7 +563,7 @@ namespace resource.role
             return menus;
         }
 
-        public List<MenuModel> GetWcsMenuDtl(int menuid)
+        public List<MenuModel> GetWcsMenuDtl(int menuid, bool getrf = false)
         {
             List<MenuModel> menus = new List<MenuModel>();
             List<WcsMenuDtl> usermenus = MenuDtlList.FindAll(c => c.menu_id == menuid);
@@ -516,7 +572,7 @@ namespace resource.role
                 usermenus.Sort((x, y) => x.order.CompareTo(y.order));
                 foreach (WcsMenuDtl item in usermenus)
                 {
-                    MenuModel menumd = GetMenu(item.id);
+                    MenuModel menumd = GetMenu(item.id, getrf);
                     if (menumd != null)
                     {
                         menus.Add(menumd);
@@ -531,11 +587,11 @@ namespace resource.role
             return MenuList;
         }
 
-        public MenuModel GetMenu(int id)
+        public MenuModel GetMenu(int id, bool getrf = false)
         {
             MenuModel menu = new MenuModel();
             WcsMenuDtl dtl = GetMenuDtl(id);
-            if (dtl != null)
+            if (dtl != null && (!dtl.rf || getrf ))
             {
                 menu.Id = dtl.id;
                 menu.FolderId = dtl.folder_id;
@@ -543,6 +599,7 @@ namespace resource.role
                 menu.OpenPage = !dtl.folder;
                 menu.ModuleId = dtl.module_id;
                 menu.MenuId = dtl.menu_id;
+                menu.Rf = dtl.rf;
                 if (!dtl.folder)
                 {
                     WcsModule md = GetModule(dtl.module_id);
@@ -669,6 +726,7 @@ namespace resource.role
             dtl.menu_id = md.MenuId;
             dtl.module_id = md.ModuleId;
             dtl.order = order;
+            dtl.rf = md.Rf;
             PubMaster.Mod.RoleSql.EditeWcsMenuDtl(dtl);
         }
 
@@ -682,6 +740,7 @@ namespace resource.role
             dtl.menu_id = md.MenuId;
             dtl.module_id = md.ModuleId;
             dtl.order = order;
+            dtl.rf = md.Rf;
             PubMaster.Mod.RoleSql.AddWcsMenuDtl(dtl);
         }
 
@@ -696,6 +755,40 @@ namespace resource.role
             return MenuList.FindAll(c => c.prior <= role.prior);
         }
 
+        public UserModelPack GetPDAMenu(WcsRole role)
+        {
+            UserModelPack pack = new UserModelPack();
+            List<ModuleView> menus = new List<ModuleView>();
+
+            List<WcsMenuDtl> usermenus = MenuDtlList.FindAll(c =>c.rf && c.menu_id == role.menu_id);
+            if (usermenus.Count > 0)
+            {
+                usermenus.Sort((x, y) => x.order.CompareTo(y.order));
+                foreach (WcsMenuDtl item in usermenus)
+                {
+                    WcsModule md = GetModule(item.module_id);
+                    if (md != null && md.ModuleType == WcsModuleTypeE.平板)
+                    {
+                        menus.Add(new ModuleView()
+                        {
+                            ModuleName = item.name,
+                            ModuleId = md.key,
+                            ModulePic = md.geometry,
+                            ModuleEntry = md.entity
+                        });
+                    }
+                }
+            }
+            pack.AddModule(menus);
+            return pack;
+        }
+
+        public List<ModuleView> GetPDAMenuDtl(int menuid)
+        {
+            List<ModuleView> menus = new List<ModuleView>();
+            
+            return menus;
+        }
         #endregion
     }
 }

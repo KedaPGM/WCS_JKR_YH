@@ -25,6 +25,9 @@
         public const string NewTileTrackId = nameof(NewTileTrackId);
         public const string PDA_INIT_VERSION = nameof(PDA_INIT_VERSION);//PDA基础字典版本数据
         public const string PDA_GOOD_VERSION = nameof(PDA_GOOD_VERSION);//PDA规格字典版本信息
+
+        public const string UserLoginFunction = nameof(UserLoginFunction);//是否开启登陆功能
+
     }
 
     public static class DicSwitchTag

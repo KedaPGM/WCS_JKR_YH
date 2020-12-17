@@ -91,7 +91,10 @@ namespace task.task
             get => IsNeed_1 || IsNeed_2;
         }
 
-        public TileShiftStatusE TileShiftStatus { set; get; }
+        public TileShiftStatusE TileShiftStatus
+        {
+            get => DevStatus?.ShiftStatus ?? TileShiftStatusE.完成;
+        }
 
         public bool StopOneTime { set; get; }
 

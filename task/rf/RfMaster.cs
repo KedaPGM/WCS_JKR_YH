@@ -287,6 +287,9 @@ namespace task.rf
                     case FunTag.QueryVersion:
                         GetGoodVerion(msg);
                         break;
+                    case FunTag.UserCheck:
+                        GetUserPdaView(msg);
+                        break;
                     #endregion
 
                     #region[严重警告]
@@ -647,7 +650,7 @@ namespace task.rf
             UserModelPack userModule = new UserModelPack()
             {
                 UserId = msg.IP,
-                UserName = "Kyle",
+                UserName = "Public",
                 UserModuleView = new List<ModuleView>()
                 {
                     //new ModuleView()
@@ -695,7 +698,7 @@ namespace task.rf
                     },
                     new ModuleView()
                     {
-                        ModuleName="砖机规格",
+                        ModuleName="砖机品种",
                         ModuleId = "RFTILEGOOD",
                         ModulePic = "updowndev.png",
                         ModuleEntry="com.keda.wcsfixplatformapp.screen.rftilegood.RfTileGoodScreen"
@@ -827,7 +830,27 @@ namespace task.rf
                 #endregion
             }
             mDicPack.AddVersion(DicTag.PDA_INIT_VERSION, PubMaster.Dic.GetDtlIntCode(DicTag.PDA_INIT_VERSION));
+            mDicPack.UserLoginFunction = PubMaster.Dic.IsSwitchOnOff(DicTag.UserLoginFunction);
             SendSucc2Rf(msg.MEID, FunTag.QueryDicAll, JsonTool.Serialize(mDicPack));
+        }
+
+        private void GetUserPdaView(RfMsgMod msg)
+        {
+            if (msg.IsPackHaveData())
+            {
+                LoginMsg login = JsonTool.Deserialize<LoginMsg>(msg.Pack.Data);
+                if (login != null)
+                {
+                    if (PubMaster.Role.CheckUserGetPdaView(login.username, login.password, out string result, out UserModelPack user))
+                    {
+                        SendSucc2Rf(msg.MEID, FunTag.UserCheck, JsonTool.Serialize(user));
+                    }
+                    else
+                    {
+                        SendFail2Rf(msg.MEID, FunTag.UserCheck, result);
+                    }
+                }
+            }
         }
 
         #endregion

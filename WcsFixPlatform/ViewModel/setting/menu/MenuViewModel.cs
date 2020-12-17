@@ -35,6 +35,7 @@ namespace wcs.ViewModel
         private string modulename;
         private int module_id;
         private bool ismoduleeenable;
+        private bool isrf;
 
         private MenuModel selectmodel;
         private MenuModel foldermd;
@@ -94,6 +95,12 @@ namespace wcs.ViewModel
         {
             get => selectmenuname;
             set => Set(ref selectmenuname, value);
+        }
+
+        public bool IsRf
+        {
+            get => isrf;
+            set => Set(ref isrf, value);
         }
         #endregion
 
@@ -184,6 +191,11 @@ namespace wcs.ViewModel
                     ActionName = "添加无目录功能";
                     actionType = 3;
                     break;
+                case "AddPDAModule":
+                    AddPDAModule();
+                    ActionName = "添加平板功能";
+                    actionType = 5;
+                    break;
                 case "SelectModule":
                     SelectModule();
                     break;
@@ -197,7 +209,7 @@ namespace wcs.ViewModel
         {
             DialogResult result = await HandyControl.Controls.Dialog.Show<ModuleSelectDialog>()
                            .Initialize<ModuleSelectViewModel>((vm) =>{
-                               vm.QueryModule(WcsModuleTypeE.电脑);
+                               vm.QueryModule(IsRf ? WcsModuleTypeE.平板 : WcsModuleTypeE.电脑);
                            }).GetResultAsync<DialogResult>();
 
             if (result.p1 is bool rs && result.p2 is WcsModule md)
@@ -313,7 +325,7 @@ namespace wcs.ViewModel
             deletelist.Clear();
             ClearInput();
 
-            List<MenuModel> list = PubMaster.Role.GetWcsMenuDtl(selectMenu.id) ;
+            List<MenuModel> list = PubMaster.Role.GetWcsMenuDtl(selectMenu.id, true) ;
             MenuList.Clear();
             foreach (MenuModel item in list)
             {
@@ -346,6 +358,18 @@ namespace wcs.ViewModel
             ClearInput();
             IsModuleEnable = true;
 
+        }
+
+        /// <summary>
+        /// 添加平板功能
+        /// </summary>
+        private void AddPDAModule()
+        {
+            ActionName = "添加";
+            ClearInput();
+            IsModuleEnable = true;
+            IsRf = true;
+            IsFolder = false;
         }
 
         private void DeleteMenu()
@@ -428,6 +452,11 @@ namespace wcs.ViewModel
                         Growl.Success("修改成功!");
                     }
                     break;
+                case 5://5.添加平板功能
+                    if (!CheckInput()) return;
+                    if (!CheckModule()) return;
+                    AddPDAMenuModule();
+                    break;
             }
         }
 
@@ -483,6 +512,7 @@ namespace wcs.ViewModel
             selectmodel = null;
             MenuName = "";
             IsFolder = false;
+            IsRf = false;
             IsModuleEnable = false;
             if (clearfolder)
             {
@@ -547,6 +577,21 @@ namespace wcs.ViewModel
             menu.MenuId = selectMenu.id;
             menu.ModuleId = module_id;
             menu.OpenPage = true;
+
+            MenuList.Add(menu);
+        }
+
+        //添加平板功能
+        private void AddPDAMenuModule()
+        {
+            MenuModel menu = new MenuModel();
+            menu.Id = PubMaster.Role.GetMaxMenuDtlId();
+            menu.Name = MenuName;
+            menu.FolderId = 0;
+            menu.MenuId = selectMenu.id;
+            menu.ModuleId = module_id;
+            menu.OpenPage = true;
+            menu.Rf = true;
 
             MenuList.Add(menu);
         }

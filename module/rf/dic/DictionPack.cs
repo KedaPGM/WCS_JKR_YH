@@ -13,6 +13,7 @@ namespace module.rf
     {
         public List<RfDiction> DicList { set; get; }
         public VersionDic VersionDic { set; get; }
+        public bool UserLoginFunction { set; get; }
 
         public void AddDic(RfDiction dic)
         {

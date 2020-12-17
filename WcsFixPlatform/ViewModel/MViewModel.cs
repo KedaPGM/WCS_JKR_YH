@@ -1,7 +1,6 @@
 ﻿using enums;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Messaging;
-using System;
 
 namespace wcs.ViewModel
 {

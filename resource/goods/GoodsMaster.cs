@@ -128,6 +128,11 @@ namespace resource.goods
             return StockSumList.Find(c => c.track_id == trackid)?.stack ?? 0;
         }
 
+        public uint GetTrackCount(uint trackid)
+        {
+            return StockSumList.Find(c => c.track_id == trackid)?.count ?? 0;
+        }
+
         public bool AddTrackStocks(uint tileid, uint trackid, uint goodsid, byte pieces, DateTime? produceTime, byte stockqty, string memo)
         {
             if(Monitor.TryEnter(_so, TimeSpan.FromSeconds(2)))
