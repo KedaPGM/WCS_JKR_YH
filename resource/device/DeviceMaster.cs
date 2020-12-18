@@ -256,6 +256,11 @@ namespace resource.device
                     result = "请刷新设备信息！";
                     return false;
                 }
+                if (device.Type == DeviceTypeE.下砖机 && device.do_shift)
+                {
+                    result = "下砖机转产中！";
+                    return false;
+                }
                 device.old_goodid = device.goods_id;
                 device.goods_id = device.pre_goodid;
                 device.pre_goodid = 0;
