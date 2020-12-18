@@ -567,25 +567,25 @@ namespace task.device
                         {
                             #region[生成入库交易]
 
-                            bool iseffect = CheckInStrategy(task);
+                            uint gid = task.GoodsId;
+                            if (task.Device.do_shift)
+                            {
+                                if (!task.DevStatus.ShiftAccept || task.DevStatus.ShiftStatus == TileShiftStatusE.复位)
+                                {
+                                    return;
+                                }
+
+                                if (task.Device.LeftGoods == task.DevStatus.Goods1)
+                                {
+                                    if (task.Device.old_goodid != 0) gid = task.Device.old_goodid;
+                                }
+                            }
+
+                            bool iseffect = CheckInStrategy(task, gid);
 
                             if (!iseffect // && mTimer.IsOver(TimerTag.DownTileLifterHaveGoods, task.ID, Site_1, 3)
                                 )
                             {
-                                uint gid = task.GoodsId;
-                                if (task.Device.do_shift)
-                                {
-                                    if (!task.DevStatus.ShiftAccept || task.DevStatus.ShiftStatus == TileShiftStatusE.复位)
-                                    {
-                                        return;
-                                    }
-
-                                    if (task.Device.LeftGoods == task.DevStatus.Goods1)
-                                    {
-                                        if (task.Device.old_goodid != 0) gid = task.Device.old_goodid;
-                                    }
-                                }
-
                                 switch (task.WorkType)
                                 {
                                     case DevWorkTypeE.规格作业:
@@ -812,26 +812,26 @@ namespace task.device
 
                     #region[生成入库交易]
 
-                    bool iseffect = CheckInStrategy(task);
+                    uint gid = task.GoodsId;
+                    if (task.Device.do_shift)
+                    {
+                        if (!task.DevStatus.ShiftAccept || task.DevStatus.ShiftStatus == TileShiftStatusE.复位)
+                        {
+                            return;
+                        }
+
+                        if (task.Device.RightGoods == task.DevStatus.Goods2)
+                        {
+                            if (task.Device.old_goodid != 0) gid = task.Device.old_goodid;
+                        }
+                    }
+
+                    bool iseffect = CheckInStrategy(task, gid);
 
                     if (!iseffect 
                         //&& mTimer.IsOver(TimerTag.DownTileLifterHaveGoods, task.ID, Site_2, 3)
                         )
                     {
-                        uint gid = task.GoodsId;
-                        if (task.Device.do_shift)
-                        {
-                            if (!task.DevStatus.ShiftAccept || task.DevStatus.ShiftStatus == TileShiftStatusE.复位)
-                            {
-                                return;
-                            }
-
-                            if (task.Device.RightGoods == task.DevStatus.Goods2)
-                            {
-                                if (task.Device.old_goodid != 0) gid = task.Device.old_goodid;
-                            }
-                        }
-
                         switch (task.WorkType)
                         {
                             case DevWorkTypeE.规格作业:
@@ -1247,7 +1247,7 @@ namespace task.device
         /// </summary>
         /// <param name="task"></param>
         /// <returns></returns>
-        private bool CheckInStrategy(TileLifterTask task)
+        private bool CheckInStrategy(TileLifterTask task, uint goodsId)
         {
             bool iseffect = false;
 
@@ -1267,7 +1267,7 @@ namespace task.device
                 case StrategyInE.优先下砖:
                     break;
                 case StrategyInE.同规同轨:
-                    iseffect = PubTask.Trans.HaveInGoods(task.AreaId, task.GoodsId, TransTypeE.入库);
+                    iseffect = PubTask.Trans.HaveInGoods(task.AreaId, goodsId, TransTypeE.入库);
                     break;
             }
             return iseffect;
