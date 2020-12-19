@@ -262,6 +262,7 @@ namespace resource.goods
                 PubMaster.Mod.GoodSql.AddGoods(good);
                 GoodsList.Add(good);
                 SendMsg(good, ActionTypeE.Add);
+                PubMaster.Dic.UpdateVersion(DicTag.PDA_GOOD_VERSION);
                 result = "";
                 return true;
             }
@@ -377,6 +378,7 @@ namespace resource.goods
                     g.updatetime = DateTime.Now;
                     PubMaster.Mod.GoodSql.EditGoods(g);
                     SendMsg(g, ActionTypeE.Update);
+                    PubMaster.Dic.UpdateVersion(DicTag.PDA_GOOD_VERSION);
                     result = "";
                     return true;
                 }
