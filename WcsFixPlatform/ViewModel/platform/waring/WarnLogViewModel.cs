@@ -131,6 +131,10 @@ namespace wcs.ViewModel
                 {
                     foreach (Warning md in list)
                     {
+                        if (md.type >= 100 && md.track_id != 0)
+                        {
+                            md.track_id = 0;
+                        }
                         LogList.Add(md);
                     }
                 }
