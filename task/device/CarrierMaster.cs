@@ -816,24 +816,109 @@ namespace task.device
                     return true;
                 }
             }
-            #region[直接找车]
+
+            #region[找其他轨道]
             else
             {
-                if (trans.area_id != 0)
+                List<uint> loadcarrerid = new List<uint>();
+                List<uint> unloadcarrierid = new List<uint>();
+                List<uint> tids = PubMaster.Area.GetTileTrackIds(trans);
+                // 按离取货点近远排序
+                List<uint> trackids = PubMaster.Track.SortTrackIdsWithOrder(tids, trans.give_track_id,
+                    PubMaster.Track.GetTrack(trans.give_track_id)?.order ?? 0);
+                foreach (uint traid in trackids)
                 {
-                    List<AreaDevice> areatras = PubMaster.Area.GetAreaDevList(trans.area_id, DeviceTypeE.运输车);
-                    foreach (AreaDevice areatra in areatras)
+                    if (!PubMaster.Track.IsStoreType(traid)) continue;
+                    List<CarrierTask> tasks = DevList.FindAll(c => c.TrackId == traid);
+                    if (tasks.Count > 0)
                     {
-                        CarrierTask task = DevList.Find(c => c.ID == areatra.device_id && c.CarrierType == needtype);
-                        if (task != null && CheckCarrierFreeNotLoad(task) 
-                            && PubMaster.Track.IsTrackType(task.TrackId, TrackTypeE.储砖_出))
+                        if (tasks.Count > 1)
+                        {
+                            result = string.Format("储砖轨道{0}有多台运输车，所以不能分配", PubMaster.Track.GetTrackName(traid));
+                            continue;
+                        }
+                        if (tasks[0] == null) continue;
+                        if (!tasks[0].IsWorking) continue;
+                        if (tasks[0].ConnStatus == SocketConnectStatusE.通信正常
+                                && tasks[0].Status == DevCarrierStatusE.停止
+                                && tasks[0].OperateMode == DevOperateModeE.自动
+                                //&& tasks[0].WorkMode == DevCarrierWorkModeE.生产模式
+                                && (tasks[0].Task == tasks[0].FinishTask || tasks[0].Task == DevCarrierTaskE.无)
+                                //&& tasks[0].Load == DevCarrierLoadE.无货
+                                && tasks[0].CarrierType == needtype
+                                )
+                        {
+                            if (tasks[0].Load == DevCarrierLoadE.无货)
+                            {
+                                unloadcarrierid.Add(tasks[0].ID);
+                            }
+                            else if (tasks[0].Load == DevCarrierLoadE.有货)
+                            {
+                                loadcarrerid.Add(tasks[0].ID);
+                            }
+                        }
+                    }
+                }
+
+                if (loadcarrerid.Count > 0 || unloadcarrierid.Count > 0)
+                {
+                    foreach (uint carid in unloadcarrierid)
+                    {
+                        CarrierTask task = DevList.Find(c => c.ID == carid);
+
+                        if (CheckCarrierFreeNotLoad(task)
+                               && task.CarrierType == needtype
+                               && !PubTask.Trans.HaveInCarrier(task.ID))
                         {
                             carrierid = task.ID;
                             return true;
                         }
+
+                        result = result + task.Device.name + ",";
                     }
+
+                    foreach (uint carid in loadcarrerid)
+                    {
+                        CarrierTask task = DevList.Find(c => c.ID == carid);
+
+                        if (CheckCarrierFreeNotLoad(task)
+                               && task.CarrierType == needtype
+                               && !PubTask.Trans.HaveInCarrier(task.ID))
+                        {
+                            carrierid = task.ID;
+                            return true;
+                        }
+
+                        result = result + task.Device.name + ",";
+                    }
+
+                    result = string.Format("{0}号运输车不符合状态，不能分配", result);
+                }
+                else
+                {
+                    result = string.Format("没有可分配的运输车");
                 }
             }
+            #endregion
+
+            #region[直接找车]
+            //else
+            //{
+            //    if (trans.area_id != 0)
+            //    {
+            //        List<AreaDevice> areatras = PubMaster.Area.GetAreaDevList(trans.area_id, DeviceTypeE.运输车);
+            //        foreach (AreaDevice areatra in areatras)
+            //        {
+            //            CarrierTask task = DevList.Find(c => c.ID == areatra.device_id && c.CarrierType == needtype);
+            //            if (task != null && CheckCarrierFreeNotLoad(task) 
+            //                && PubMaster.Track.IsTrackType(task.TrackId, TrackTypeE.储砖_出))
+            //            {
+            //                carrierid = task.ID;
+            //                return true;
+            //            }
+            //        }
+            //    }
+            //}
             #endregion
 
             return false;
@@ -934,9 +1019,6 @@ namespace task.device
                 #endregion
             }
             //前面找到车了，如果空闲则分配，否则等待
-
-
-
             if (carrier != null)
             {
                 switch (trans.TransType)
@@ -984,28 +1066,113 @@ namespace task.device
                         break;
                 }
             }
+
             #region[找其他轨道]
             else
             {
-                List<uint> trackids = PubMaster.Area.GetTileTrackIds(trans);
+                List<uint> loadcarrerid = new List<uint>();
+                List<uint> unloadcarrierid = new List<uint>();
+                List<uint> tids = PubMaster.Area.GetTileTrackIds(trans);
+                // 按离取货点近远排序
+                List<uint> trackids = PubMaster.Track.SortTrackIdsWithOrder(tids, trans.take_track_id,
+                    PubMaster.Track.GetTrack(trans.take_track_id)?.order ?? 0);
                 foreach (uint traid in trackids)
                 {
                     if (!PubMaster.Track.IsStoreType(traid)) continue;
                     List<CarrierTask> tasks = DevList.FindAll(c => c.TrackId == traid);
                     if (tasks.Count > 0)
                     {
-                        if (tasks.Count > 1) continue;
-                        if (CheckCarrierFreeNotLoad(tasks[0]) 
-                            && tasks[0].CarrierType == needtype
-                            && !PubTask.Trans.HaveInCarrier(tasks[0].ID)
-                            )
+                        if (tasks.Count > 1)
                         {
-                            carrierid = tasks[0].ID;
-                            return true;
+                            result = string.Format("储砖轨道{0}有多台运输车，所以不能分配", PubMaster.Track.GetTrackName(traid));
+                            continue;
+                        }
+                        if (tasks[0] == null) continue;
+                        if (!tasks[0].IsWorking) continue;
+                        if (tasks[0].ConnStatus == SocketConnectStatusE.通信正常
+                                && tasks[0].Status == DevCarrierStatusE.停止
+                                && tasks[0].OperateMode == DevOperateModeE.自动
+                                //&& tasks[0].WorkMode == DevCarrierWorkModeE.生产模式
+                                && (tasks[0].Task == tasks[0].FinishTask || tasks[0].Task == DevCarrierTaskE.无)
+                                //&& tasks[0].Load == DevCarrierLoadE.无货
+                                && tasks[0].CarrierType == needtype
+                                )
+                        {
+                            if (tasks[0].Load == DevCarrierLoadE.无货)
+                            {
+                                unloadcarrierid.Add(tasks[0].ID);
+                            }
+                            else if (tasks[0].Load == DevCarrierLoadE.有货)
+                            {
+                                loadcarrerid.Add(tasks[0].ID);
+                            }
                         }
                     }
                 }
+
+                if (loadcarrerid.Count > 0 || unloadcarrierid.Count > 0)
+                {
+                    foreach (uint carid in unloadcarrierid)
+                    {
+                        CarrierTask task = DevList.Find(c => c.ID == carid);
+
+                        if (CheckCarrierFreeNotLoad(task)
+                               && task.CarrierType == needtype
+                               && !PubTask.Trans.HaveInCarrier(task.ID))
+                        {
+                            carrierid = task.ID;
+                            return true;
+                        }
+
+                        result = result + task.Device.name + ",";
+                    }
+
+                    foreach (uint carid in loadcarrerid)
+                    {
+                        CarrierTask task = DevList.Find(c => c.ID == carid);
+
+                        if (CheckCarrierFreeNotLoad(task)
+                               && task.CarrierType == needtype
+                               && !PubTask.Trans.HaveInCarrier(task.ID))
+                        {
+                            carrierid = task.ID;
+                            return true;
+                        }
+
+                        result = result + task.Device.name + ",";
+                    }
+
+                    result = string.Format("{0}号运输车不符合状态，不能分配", result);
+                }
+                else
+                {
+                    result = string.Format("没有可分配的运输车");
+                }
             }
+            #endregion
+
+            #region[找其他轨道]
+            //else
+            //{
+            //    List<uint> trackids = PubMaster.Area.GetTileTrackIds(trans);
+            //    foreach (uint traid in trackids)
+            //    {
+            //        if (!PubMaster.Track.IsStoreType(traid)) continue;
+            //        List<CarrierTask> tasks = DevList.FindAll(c => c.TrackId == traid);
+            //        if (tasks.Count > 0)
+            //        {
+            //            if (tasks.Count > 1) continue;
+            //            if (CheckCarrierFreeNotLoad(tasks[0]) 
+            //                && tasks[0].CarrierType == needtype
+            //                && !PubTask.Trans.HaveInCarrier(tasks[0].ID)
+            //                )
+            //            {
+            //                carrierid = tasks[0].ID;
+            //                return true;
+            //            }
+            //        }
+            //    }
+            //}
             #endregion
 
             return false;

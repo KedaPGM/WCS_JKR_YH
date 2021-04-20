@@ -239,6 +239,12 @@ namespace resource.goods
         #region[品种]
         public bool AddGoods(Goods good, out string result)
         {
+            if (good.width > 5000 || good.length > 5000)
+            {
+                result = "请确认规格长宽是否有误！";
+                return false;
+            }
+
             if (GoodsList.Exists(c => c.area_id == good.area_id
                                     && c.width == good.width
                                     && c.length == good.length
