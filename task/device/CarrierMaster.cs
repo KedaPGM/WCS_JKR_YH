@@ -822,7 +822,7 @@ namespace task.device
             {
                 List<uint> loadcarrerid = new List<uint>();
                 List<uint> unloadcarrierid = new List<uint>();
-                List<uint> tids = PubMaster.Area.GetTileTrackIds(trans);
+                List<uint> tids = PubMaster.Area.GetAreaTrackIds(trans.area_id, TrackTypeE.储砖_出);
                 // 按离取货点近远排序
                 List<uint> trackids = PubMaster.Track.SortTrackIdsWithOrder(tids, trans.give_track_id,
                     PubMaster.Track.GetTrack(trans.give_track_id)?.order ?? 0);
