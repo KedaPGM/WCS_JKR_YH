@@ -125,6 +125,17 @@ namespace task.device
         {
             DevTcp?.SendCmd(DevCarrierCmdE.终止任务, 0, 0, DevReset);
         }
+
+        internal void ClearDevStatus()
+        {
+            if (DevStatus != null)
+            {
+                DevStatus.CurrentSite = 0;
+                DevStatus.CurrentTask = DevCarrierTaskE.其他;
+                TrackId = 0;
+            }
+        }
+
         #endregion
 
         #region[更新轨道信息]

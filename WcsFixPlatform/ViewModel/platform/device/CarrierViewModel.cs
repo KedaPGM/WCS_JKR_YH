@@ -113,6 +113,9 @@ namespace wcs.ViewModel
                     case 14://停止
                         PubTask.Carrier.StartStopCarrier(DeviceSelected.ID, false);
                         break;
+                    case 15://清空设备信息
+                        PubTask.Carrier.ClearTaskStatus(DeviceSelected.ID);
+                        break;
                     default:
                         DevCarrierTaskE type = (DevCarrierTaskE)stype;
                         if (!PubTask.Carrier.DoManualTask(DeviceSelected.ID, type, out string result,  false))

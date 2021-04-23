@@ -65,6 +65,7 @@
                         <!--<MenuItem Header="生产" Tag="12" Command="{Binding SendCarrierTaskCmd}" CommandParameter="{Binding Tag,RelativeSource={RelativeSource Self}}"/>-->
                         <MenuItem Header="启动" Tag="13" Command="{Binding SendCarrierTaskCmd}" CommandParameter="{Binding Tag,RelativeSource={RelativeSource Self}}"/>
                         <MenuItem Header="停止" Tag="14" Command="{Binding SendCarrierTaskCmd}" CommandParameter="{Binding Tag,RelativeSource={RelativeSource Self}}"/>
+                        <MenuItem Header="清除当前位置信息" Tag="15" Command="{Binding SendCarrierTaskCmd}" CommandParameter="{Binding Tag,RelativeSource={RelativeSource Self}}"  />
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>

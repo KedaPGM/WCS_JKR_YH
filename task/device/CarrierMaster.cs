@@ -357,6 +357,30 @@ namespace task.device
             }
         }
 
+        /// <summary>
+        /// 清空设备信息
+        /// </summary>
+        /// <param name="iD"></param>
+        public void ClearTaskStatus(uint carrierid)
+        {
+            if (Monitor.TryEnter(_obj, TimeSpan.FromSeconds(1)))
+            {
+                try
+                {
+                    CarrierTask task = DevList.Find(c => c.ID == carrierid);
+                    if (task != null)
+                    {
+                        task.ClearDevStatus();
+                        MsgSend(task, task.DevStatus);
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(_obj);
+                }
+            }
+        }
+
         #endregion
 
         #region[检查设备状态]
