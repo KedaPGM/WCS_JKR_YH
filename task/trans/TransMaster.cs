@@ -246,7 +246,7 @@ namespace task.trans
                                             {
                                                 if (!IsTraInTrans(traid)
                                                     && !PubTask.Carrier.HaveInTrack(traid, trans.carrier_id)
-                                                    && PubMaster.Area.isFerryWithTrack(trans.area_id, trans.give_ferry_id, traid)
+                                                    && PubMaster.Area.IsFerryWithTrack(trans.area_id, trans.give_ferry_id, traid)
                                                     && PubTask.Carrier.IsTaskAndDoTask(trans.carrier_id, DevCarrierTaskE.终止)
                                                     && SetGiveSite(trans, traid))
                                                 {
@@ -798,7 +798,7 @@ namespace task.trans
                                                         foreach (var trackid in trackids)
                                                         {
                                                             if (!HaveInTileTrack(trackid)
-                                                              && PubMaster.Area.isFerryWithTrack(trans.area_id, trans.give_ferry_id, trackid))
+                                                              && PubMaster.Area.IsFerryWithTrack(trans.area_id, trans.give_ferry_id, trackid))
                                                             {
                                                                 trans.finish_track_id = trackid;
                                                                 isallocate = true;
@@ -814,7 +814,7 @@ namespace task.trans
                                                         foreach (Stock stock in allocatestocks)
                                                         {
                                                             if (!PubTask.Carrier.HaveInTrack(stock.track_id)
-                                                              && PubMaster.Area.isFerryWithTrack(trans.area_id, trans.give_ferry_id, stock.track_id))
+                                                              && PubMaster.Area.IsFerryWithTrack(trans.area_id, trans.give_ferry_id, stock.track_id))
                                                             {
                                                                 trans.finish_track_id = stock.track_id;
                                                                 isallocate = true;
@@ -1209,7 +1209,7 @@ namespace task.trans
                     #endregion
             }
         }
-        
+
         #endregion
 
         #region[移车任务]
@@ -1217,6 +1217,8 @@ namespace task.trans
         {
             Track track = PubTask.Carrier.GetCarrierTrack(trans.carrier_id);
             if (track == null) return;
+            bool isload = PubTask.Carrier.IsLoad(trans.carrier_id);
+            uint ferryTraid;
             switch (trans.TransStaus)
             {
                 #region[移车中]
@@ -1235,12 +1237,22 @@ namespace task.trans
 
                         #region[储砖入轨道]
                         case TrackTypeE.储砖_入:
-                            if(track.id == trans.take_track_id)
+                            if (isload)
+                            {
+                                if (PubTask.Carrier.IsStopFTask(trans.carrier_id))
+                                {
+                                    PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.下降放货);
+                                }
+
+                                return;
+                            }
+
+                            if (track.id == trans.take_track_id)
                             {
                                 //切换区域[同轨道-不同区域]
-                                if(track.brother_track_id == trans.give_track_id)
+                                if (track.brother_track_id == trans.give_track_id)
                                 {
-                                    if (PubTask.Carrier.IsCarrierFree(trans.carrier_id) 
+                                    if (PubTask.Carrier.IsCarrierFree(trans.carrier_id)
                                         && !PubTask.Carrier.HaveInTrack(trans.give_track_id))
                                     {
                                         PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.前进至点);
@@ -1264,7 +1276,7 @@ namespace task.trans
                                 }
                             }
 
-                            if (track.id == trans.give_track_id 
+                            if (track.id == trans.give_track_id
                                 && PubTask.Carrier.IsCarrierFree(trans.carrier_id))
                             {
                                 SetStatus(trans, TransStatusE.完成);
@@ -1274,6 +1286,15 @@ namespace task.trans
 
                         #region[储砖出轨道]
                         case TrackTypeE.储砖_出:
+                            if (isload)
+                            {
+                                if (PubTask.Carrier.IsStopFTask(trans.carrier_id))
+                                {
+                                    PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.下降放货);
+                                }
+
+                                return;
+                            }
                             if (track.id == trans.take_track_id)
                             {
                                 //切换区域[同轨道-不同区域]
@@ -1350,7 +1371,7 @@ namespace task.trans
                                 PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.后退至点);
                             }
                             break;
-                        #endregion
+                            #endregion
                     }
                     break;
                 #endregion
@@ -1365,7 +1386,7 @@ namespace task.trans
                 case TransStatusE.取消:
                     SetStatus(trans, TransStatusE.完成);
                     break;
-                #endregion
+                    #endregion
             }
         }
         #endregion
@@ -1456,9 +1477,15 @@ namespace task.trans
             }
         }
 
-        private int HaveAreaSortTask(ushort area)
+        /// <summary>
+        /// 当前任务数量
+        /// </summary>
+        /// <param name="area"></param>
+        /// <param name="tt"></param>
+        /// <returns></returns>
+        public int HaveAreaSortTask(ushort area, TransTypeE tt = TransTypeE.倒库)
         {
-            return TransList.Count(c => !c.finish && c.area_id == area && c.TransType == TransTypeE.倒库);
+            return TransList.Count(c => !c.finish && c.area_id == area && c.TransType == tt);
         }
         #endregion
 
@@ -1474,47 +1501,27 @@ namespace task.trans
                 switch (movetype)
                 {
                     case MoveTypeE.转移占用轨道://优先到空轨道
+
                         //优先最近轨道
                         List<uint> trackids = PubMaster.Area.GetAreaTrackIds(track.area, totracktype);
 
                         List<uint> tids = PubMaster.Track.SortTrackIdsWithOrder(trackids, trackid, track.order);
 
+                        //能去这个取货/卸货轨道的所有配置的摆渡车信息
+                        List<uint> ferryids = PubMaster.Area.GetWithTracksFerryIds(trackid);
+                        ferryids = PubTask.Ferry.GetWorkingAndEnable(ferryids);
+
                         foreach (uint t in tids)
                         {
-                            if (!IsTraInTrans(t) && PubMaster.Track.IsTrackEnable(t)
-                                 && !PubTask.Carrier.HaveInTrack(t))
+                            if (!IsTraInTrans(t)
+                                && !PubTask.Carrier.HaveInTrack(t, carrierid)
+                                && PubMaster.Area.ExistFerryWithTrack(ferryids, t))
                             {
                                 givetrackid = t;
                                 break;
                             }
                         }
 
-                        //if (PubMaster.Track.IsTrackFree(track.right_track_id) 
-                        //    && !IsTraInTrans(track.right_track_id)
-                        //    && !PubTask.Carrier.HaveInTrack(track.right_track_id))
-                        //{
-                        //    givetrackid = track.right_track_id;
-                        //}
-                        //else if (PubMaster.Track.IsTrackFree(track.left_track_id) 
-                        //    && !IsTraInTrans(track.left_track_id)
-                        //    && !PubTask.Carrier.HaveInTrack(track.right_track_id))
-                        //{
-                        //    givetrackid = track.left_track_id;
-                        //}
-
-                        //if(givetrackid == 0)
-                        //{
-                        //    List<Track> tracklist = PubMaster.Track.GetTrackInTypeFree(track.area, totracktype);
-                        //    foreach (Track tra in tracklist)
-                        //    {
-                        //        if (!IsTraInTrans(tra.id) 
-                        //            && !PubTask.Carrier.HaveInTrack(tra.id))
-                        //        {
-                        //            givetrackid = tra.id;
-                        //            break;
-                        //        }
-                        //    }
-                        //}
                         break;
                     case MoveTypeE.释放摆渡车:
                         break;
@@ -2004,6 +2011,17 @@ namespace task.trans
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 是否存在区域类型的任务
+        /// </summary>
+        /// <param name="area">区域ID</param>
+        /// <param name="types">任务类型</param>
+        /// <returns></returns>
+        public bool ExistAreaLineType(uint area, params TransTypeE[] types)
+        {
+            return TransList.Exists(c => c.area_id == area && c.InType(types));
         }
 
         #endregion

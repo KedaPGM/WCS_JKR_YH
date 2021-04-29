@@ -5,6 +5,7 @@ using resource;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using task.diagnose;
 using tool.mlog;
 using tool.timer;
 
@@ -21,6 +22,12 @@ namespace task.trans
         internal MTimer mTimer;
         internal Log mLog;
         protected List<StockTrans> TransList { set; get; }
+        #endregion
+
+        #region[分析]
+
+        DiagnoseServer MDiagnoreServer;
+
         #endregion
 
         #region[构造函数/初始化/启动/停止]
@@ -113,6 +120,12 @@ namespace task.trans
                     }
                 }
 
+                try
+                {
+                    MDiagnoreServer.Diagnose();
+                }
+                catch { }
+
                 Thread.Sleep(1000);
             }
         }
@@ -146,7 +159,7 @@ namespace task.trans
             }
         }
 
-        public void AddTransWithoutLock(uint areaid, uint lifterid, TransTypeE type,
+        public uint AddTransWithoutLock(uint areaid, uint lifterid, TransTypeE type,
                                         uint goodsid, uint stocksid,
                                         uint taketrackid, uint givetrackid,
                                         TransStatusE initstatus = TransStatusE.调度设备,
@@ -171,6 +184,8 @@ namespace task.trans
             PubMaster.Mod.GoodSql.AddStockTrans(trans);
 
             SendMsg(trans);
+
+            return newid;
         }
 
         internal void SetStatus(StockTrans trans, TransStatusE status, string memo = "")

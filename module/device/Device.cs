@@ -1,5 +1,6 @@
 ﻿using enums;
 using System;
+using System.Linq;
 
 namespace module.device
 {
@@ -90,6 +91,16 @@ namespace module.device
         {
             get => (CarrierTypeE)att1;
             set => att1 = (byte)value;
+        }
+
+        public bool InType(DeviceTypeE[] types)
+        {
+            return types.Contains(Type);
+        }
+
+        public bool NotInType(DeviceTypeE[] types)
+        {
+            return !types.Contains(Type);
         }
     }
 }

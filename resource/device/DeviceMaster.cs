@@ -3,6 +3,7 @@ using module.device;
 using module.goods;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 
 namespace resource.device
@@ -99,6 +100,11 @@ namespace resource.device
         public bool IsDevType(uint devid, DeviceTypeE type)
         {
             return DeviceList.Exists(c => c.id == devid && c.Type == type);
+        }
+
+        internal List<uint> GetFerryIds(params DeviceTypeE[] types)
+        {
+            return DeviceList.FindAll(c => c.InType(types))?.Select(c => c.id).ToList();
         }
 
         #endregion

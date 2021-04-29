@@ -89,5 +89,12 @@ namespace task.task
             PubMaster.Device.SetEnable(Device.id, isenable);
         }
 
+        internal void SetEnableAndWorking(bool isenable)
+        {
+            Device.enable = isenable;
+            Device.do_work = isenable;
+            PubMaster.Device.SetEnable(Device.id, isenable);
+            PubMaster.Device.SetDevWorking(Device.id, isenable, out DeviceTypeE type);
+        }
     }
 }

@@ -59,6 +59,10 @@
     <Compile Include="device\CarrierMaster.cs" />
     <Compile Include="device\FerryMaster.cs" />
     <Compile Include="device\TileLifterMaster.cs" />
+    <Compile Include="diagnose\base\FerryBaseDiagnose.cs" />
+    <Compile Include="diagnose\base\TransBaseDiagnose.cs" />
+    <Compile Include="diagnose\DiagnoseServer.cs" />
+    <Compile Include="diagnose\trans\MoveCarDiagnose.cs" />
     <Compile Include="rf\RfMaster.cs" />
     <Compile Include="task\CarrierTask.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

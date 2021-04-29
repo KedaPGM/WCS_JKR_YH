@@ -28,6 +28,7 @@
 
         public const string UserLoginFunction = nameof(UserLoginFunction);//是否开启登陆功能
 
+        public static string EnableMoveCarDiagnose = nameof(EnableMoveCarDiagnose);   //开关-启用移车分析服务
     }
 
     public static class DicSwitchTag

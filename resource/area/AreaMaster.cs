@@ -224,10 +224,78 @@ namespace resource.area
         /// <param name="ferryid"></param>
         /// <param name="trackid"></param>
         /// <returns></returns>
-        public bool isFerryWithTrack(uint areaid, uint ferryid, uint trackid)
+        public bool IsFerryWithTrack(uint areaid, uint ferryid, uint trackid)
         {
             return AreaDevTraList.Exists(c => c.area_id == areaid && c.device_id == ferryid && c.track_id == trackid);
 
+        }
+
+        /// <summary>
+        /// 获取能够同时到达指定轨道的摆渡车ID
+        /// </summary>
+        /// <param name="ferrytype">摆渡车类型</param>
+        /// <param name="traids">轨道可变列表（多个轨道号）</param>
+        /// <returns></returns>
+        public List<uint> GetWithTracksFerryIds(DeviceTypeE ferrytype, params uint[] traids)
+        {
+            List<uint> ferryids = PubMaster.Device.GetFerryIds(ferrytype);
+            return GetWithTracksFerryIds(ferryids, traids);
+        }
+
+        /// <summary>
+        /// 获取能够同时到达指定轨道的摆渡车ID
+        /// </summary>
+        /// <param name="traids">轨道可变列表（多个轨道号）</param>
+        /// <returns></returns>
+        public List<uint> GetWithTracksFerryIds(params uint[] traids)
+        {
+            return GetWithTracksFerryIds(null, traids);
+        }
+
+        /// <summary>
+        /// 获取能够同时到达指定轨道的摆渡车ID
+        /// </summary>
+        /// <param name="ferryids">需要判断的摆渡车</param>
+        /// <param name="traids">轨道可变列表（多个轨道号）</param>
+        /// <returns></returns>
+        public List<uint> GetWithTracksFerryIds(List<uint> ferryids, params uint[] traids)
+        {
+            List<uint> filterferryids = new List<uint>();
+
+            if (ferryids == null)
+            {
+                ferryids = PubMaster.Device.GetFerryIds(DeviceTypeE.上摆渡, DeviceTypeE.下摆渡);
+            }
+            //查找能满砖所有轨道的摆渡车
+            bool havealltrack;
+            foreach (var ferryid in ferryids)
+            {
+                havealltrack = true;
+                foreach (uint traid in traids)
+                {
+                    if (!AreaDevTraList.Exists(c => c.track_id == traid && ferryid == c.device_id))
+                    {
+                        havealltrack = false;
+                    }
+                }
+
+                if (havealltrack)
+                {
+                    filterferryids.Add(ferryid);
+                }
+            }
+            return filterferryids;
+        }
+
+        /// <summary>
+        /// 查看是否摆渡车分配的轨道里面是否配置了另外一个轨道
+        /// </summary>
+        /// <param name="ferryids">已经配置了A轨道的摆渡车信息</param>
+        /// <param name="trackid">需要检查是否配了的B轨道</param>
+        /// <returns></returns>
+        public bool ExistFerryWithTrack(List<uint> ferryids, uint trackid)
+        {
+            return AreaDevTraList.Exists(c => ferryids.Contains(c.device_id) && c.track_id == trackid);
         }
 
         /// <summary>

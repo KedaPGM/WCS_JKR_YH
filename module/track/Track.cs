@@ -1,5 +1,6 @@
 ﻿using enums.track;
 using System;
+using System.Linq;
 
 namespace module.track
 {
@@ -76,6 +77,16 @@ namespace module.track
         {
             get => (TrackAlertE)alert_status;
             set => alert_status = (ushort)value;
+        }
+
+        /// <summary>
+        /// 检查是否符合类型
+        /// </summary>
+        /// <param name="types"></param>
+        /// <returns></returns>
+        public bool InType(params TrackTypeE[] types)
+        {
+            return types.Contains(Type);
         }
 
     }

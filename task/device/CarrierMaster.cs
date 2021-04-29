@@ -158,7 +158,7 @@ namespace task.device
                         {
                             if (!task.IsEnable)
                             {
-                                task.SetEnable(isstart);
+                                task.SetEnableAndWorking(isstart);
                             }
                             task.Start();
                         }
@@ -166,7 +166,7 @@ namespace task.device
                         {
                             if (task.IsEnable)
                             {
-                                task.SetEnable(isstart);
+                                task.SetEnableAndWorking(isstart);
                             }
                             task.Stop();
                             PubMaster.Warn.RemoveDevWarn((ushort)task.ID);
@@ -846,13 +846,26 @@ namespace task.device
             {
                 List<uint> loadcarrerid = new List<uint>();
                 List<uint> unloadcarrierid = new List<uint>();
+
                 List<uint> tids = PubMaster.Area.GetAreaTrackIds(trans.area_id, TrackTypeE.储砖_出);
                 // 按离取货点近远排序
                 List<uint> trackids = PubMaster.Track.SortTrackIdsWithOrder(tids, trans.give_track_id,
                     PubMaster.Track.GetTrack(trans.give_track_id)?.order ?? 0);
+
+                //能去这个倒库轨道所有配置的摆渡车轨道信息
+                List<uint> ferryids = PubMaster.Area.GetWithTracksFerryIds(DeviceTypeE.上摆渡, trans.give_track_id);
+                ferryids = PubTask.Ferry.GetWorkingAndEnable(ferryids);
+
                 foreach (uint traid in trackids)
                 {
                     if (!PubMaster.Track.IsStoreType(traid)) continue;
+
+                    //是否有能够到达该轨道的摆渡车
+                    if (!PubMaster.Area.ExistFerryWithTrack(ferryids, traid))
+                    {
+                        continue;
+                    }
+
                     List<CarrierTask> tasks = DevList.FindAll(c => c.TrackId == traid);
                     if (tasks.Count > 0)
                     {
@@ -1096,13 +1109,26 @@ namespace task.device
             {
                 List<uint> loadcarrerid = new List<uint>();
                 List<uint> unloadcarrierid = new List<uint>();
+
                 List<uint> tids = PubMaster.Area.GetTileTrackIds(trans);
                 // 按离取货点近远排序
                 List<uint> trackids = PubMaster.Track.SortTrackIdsWithOrder(tids, trans.take_track_id,
                     PubMaster.Track.GetTrack(trans.take_track_id)?.order ?? 0);
+
+                //能去这个取货/卸货轨道的所有配置的摆渡车信息
+                List<uint> ferryids = PubMaster.Area.GetWithTracksFerryIds(ferrytype, trans.take_track_id, trans.give_track_id);
+                ferryids = PubTask.Ferry.GetWorkingAndEnable(ferryids);
+
                 foreach (uint traid in trackids)
                 {
                     if (!PubMaster.Track.IsStoreType(traid)) continue;
+
+                    //是否有能够到达该轨道的摆渡车
+                    if (!PubMaster.Area.ExistFerryWithTrack(ferryids, traid))
+                    {
+                        continue;
+                    }
+
                     List<CarrierTask> tasks = DevList.FindAll(c => c.TrackId == traid);
                     if (tasks.Count > 0)
                     {
@@ -1200,6 +1226,119 @@ namespace task.device
             #endregion
 
             return false;
+        }
+
+        /// <summary>
+        /// 获取不能直接通过一个摆渡车到达的运输车ID们
+        /// </summary>
+        /// <param name="trans">交易信息</param>
+        /// <param name="ferrytype">摆渡车类型</param>
+        /// <param name="checktakegivetrack">检查取货放砖轨道</param>
+        /// <param name="tids">区域线路和砖机分配的轨道</param>
+        /// <param name="ferryids">任务允许的摆渡车</param>
+        /// <returns></returns>
+        internal List<CarrierTask> GetFreeCarrierWithNoDirectFerry(StockTrans trans, DeviceTypeE ferrytype, bool checktakegivetrack, out List<uint> tids, out List<uint> ferryids)
+        {
+            List<CarrierTask> freecarriers = new List<CarrierTask>();
+
+            CarrierTypeE needtype = PubMaster.Goods.GetGoodsCarrierType(trans.goods_id);
+
+            List<uint> loadcarrerid = new List<uint>();
+            List<uint> unloadcarrierid = new List<uint>();
+            List<uint> trackids;
+            // 获取任务区域所有可作业轨道
+            if (ferrytype == DeviceTypeE.上摆渡)
+            {
+                trackids = PubMaster.Area.GetAreaTrackIds(trans.area_id, TrackTypeE.储砖_出);
+            }
+            else
+            {
+                trackids = PubMaster.Area.GetAreaTrackIds(trans.area_id, TrackTypeE.储砖_入);
+            }
+            // 按离取货点近远排序    tids
+            //能去这个取货/卸货轨道的所有配置的摆渡车信息    ferryids
+            if (checktakegivetrack)
+            {
+                tids = PubMaster.Track.SortTrackIdsWithOrder(trackids, trans.take_track_id, PubMaster.Track.GetTrack(trans.take_track_id)?.order ?? 0);
+                ferryids = PubMaster.Area.GetWithTracksFerryIds(ferrytype, trans.take_track_id, trans.give_track_id);
+                ferryids = PubTask.Ferry.GetWorkingAndEnable(ferryids);
+            }
+            else
+            {
+                tids = PubMaster.Track.SortTrackIdsWithOrder(trackids, trans.give_track_id, PubMaster.Track.GetTrack(trans.give_track_id)?.order ?? 0);
+                ferryids = PubMaster.Area.GetWithTracksFerryIds(ferrytype, trans.give_track_id);
+                ferryids = PubTask.Ferry.GetWorkingAndEnable(ferryids);
+            }
+
+            foreach (uint traid in tids)
+            {
+                if (!PubMaster.Track.IsStoreType(traid)) continue;
+
+                List<CarrierTask> tasks = DevList.FindAll(c => c.TrackId == traid);
+                if (tasks.Count > 0)
+                {
+                    if (tasks.Count > 1)
+                    {
+                        continue;
+                    }
+                    if (tasks[0] == null) continue;
+                    if (!tasks[0].IsWorking) continue;
+
+                    //能直接到达作业轨道不用考虑
+                    if (PubMaster.Area.ExistFerryWithTrack(ferryids, traid))
+                    {
+                        continue;
+                    }
+
+                    if (tasks[0].ConnStatus == SocketConnectStatusE.通信正常
+                            && tasks[0].Status == DevCarrierStatusE.停止
+                            && tasks[0].OperateMode == DevOperateModeE.自动
+                            //&& tasks[0].WorkMode == DevCarrierWorkModeE.生产模式
+                            && (tasks[0].Task == tasks[0].FinishTask || tasks[0].Task == DevCarrierTaskE.无)
+                            //&& tasks[0].Load == DevCarrierLoadE.无货
+                            && tasks[0].CarrierType == needtype
+                            )
+                    {
+                        if (tasks[0].Load == DevCarrierLoadE.无货)
+                        {
+                            unloadcarrierid.Add(tasks[0].ID);
+                        }
+                        else if (tasks[0].Load == DevCarrierLoadE.有货)
+                        {
+                            loadcarrerid.Add(tasks[0].ID);
+                        }
+                    }
+                }
+            }
+
+            if (loadcarrerid.Count > 0 || unloadcarrierid.Count > 0)
+            {
+                foreach (uint carid in unloadcarrierid)
+                {
+                    CarrierTask task = DevList.Find(c => c.ID == carid);
+
+                    if (CheckCarrierFreeNotLoad(task)
+                           && task.CarrierType == needtype
+                           && !PubTask.Trans.HaveInCarrier(task.ID))
+                    {
+                        freecarriers.Add(task);
+                    }
+                }
+
+                foreach (uint carid in loadcarrerid)
+                {
+                    CarrierTask task = DevList.Find(c => c.ID == carid);
+
+                    if (CheckCarrierFreeNotLoad(task)
+                           && task.CarrierType == needtype
+                           && !PubTask.Trans.HaveInCarrier(task.ID))
+                    {
+                        freecarriers.Add(task);
+                    }
+                }
+            }
+
+            return freecarriers;
         }
 
         internal DevCarrierSignalE GetCarrierSignal(uint carrier_id)
