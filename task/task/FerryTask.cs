@@ -3,6 +3,7 @@ using module.device;
 using resource;
 using socket.tcp;
 using System;
+using System.Collections.Generic;
 
 namespace task.task
 {
@@ -13,6 +14,11 @@ namespace task.task
         public bool IsLock { set; get; }
         public uint TransId { set; get; }
         public DateTime? LockRefreshTime { set; get; }
+
+        /// <summary>
+        /// 摆渡车暂记目标轨道ID
+        /// </summary>
+        public uint RecordTraId { set; get; }
 
         #endregion
 
@@ -96,8 +102,15 @@ namespace task.task
             DevTcp?.SendCmd(DevFerryCmdE.查询, 0, 0, 0);
         }
 
-        internal void DoLocate(ushort trackcode)
+        internal void DoLocate(ushort trackcode, uint recodeTraid)
         {
+            // 记录点未清零，不发其他定位
+            if (RecordTraId > 0 && RecordTraId != recodeTraid) return;
+
+            // 记录目标点
+            RecordTraId = recodeTraid;
+            DevTcp.AddStatusLog(string.Format("记录目标[ {0} ]", PubMaster.Track.GetTrackName(RecordTraId)));
+
             byte[] b = BitConverter.GetBytes(trackcode);
             DevTcp?.SendCmd(DevFerryCmdE.定位, b[1], b[0], 0);
         }
@@ -116,11 +129,16 @@ namespace task.task
 
         internal void DoReSet(DevFerryResetPosE resetpos)
         {
+            RecordTraId = 0;
+            DevTcp.AddStatusLog(string.Format("复位-清除记录目标"));
             DevTcp?.SendCmd(DevFerryCmdE.原点复位, (byte)resetpos, 0, 0);
         }
 
         internal void DoStop()
         {
+            // 清除 记录目标点
+            RecordTraId = 0;
+            DevTcp.AddStatusLog(string.Format("终止-清除记录目标"));
             DevTcp?.SendCmd(DevFerryCmdE.终止任务, 0, 0, 0);
         }
 
@@ -272,6 +290,54 @@ namespace task.task
                     break;
             }
             return trackId;
+        }
+
+        /// <summary>
+        /// 获取摆渡车当前所有对位轨道
+        /// </summary>
+        /// <returns></returns>
+        internal List<uint> GetFerryCurrentTrackIds()
+        {
+            List<uint> trackIds = new List<uint>();
+            if (IsUpLight)
+            {
+                trackIds.Add(UpTrackId);
+            }
+            if (IsDownLight)
+            {
+                trackIds.Add(DownTrackId);
+            }
+
+            if (trackIds == null || trackIds.Count == 0) // WDNMD都不亮
+            {
+                switch (Type)
+                {
+                    case DeviceTypeE.上摆渡:
+                        trackIds.Add(DownTrackId);
+                        break;
+                    case DeviceTypeE.下摆渡:
+                        trackIds.Add(UpTrackId);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return trackIds;
+        }
+
+        /// <summary>
+        /// 判断摆渡车是否没有在执行任务
+        /// </summary>
+        public bool IsNotDoingTask
+        {
+            get => Status == DevFerryStatusE.停止
+                && (DevStatus.CurrentTask == DevStatus.FinishTask // 当前&完成 一致
+                    || DevStatus.CurrentTask == DevFerryTaskE.未知 // 当前无指令就当它没作业
+                    || DevStatus.CurrentTask == DevFerryTaskE.终止// 当前终止就当它没作业
+                    || (DevStatus.CurrentTask == DevFerryTaskE.定位
+                        && DevStatus.FinishTask == DevFerryTaskE.未知
+                        && DevStatus.TargetSite == 0)// 手动后可能出现【目标-0，当前-定位，完成-无】
+                    );
         }
 
         #endregion

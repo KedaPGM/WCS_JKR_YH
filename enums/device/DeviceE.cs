@@ -60,4 +60,34 @@
         优先上砖,//找库存位取 派多个任务
         同机同轨,//同砖机 派发一个取货任务
     }
+
+
+    /// <summary>
+    /// 交管类型
+    /// </summary>
+    public enum TrafficControlTypeE
+    {
+        运输车交管运输车,
+        摆渡车交管摆渡车,
+        运输车交管摆渡车,
+        摆渡车交管运输车,
+    }
+
+    /// <summary>
+    /// 交管状态
+    /// </summary>
+    public enum TrafficControlStatusE
+    {
+        初始化,
+        交管中,
+        已完成,
+    }
+
+    public enum TrafficControlUpdateE
+    {
+        Status,
+        from,
+        to
+    }
+
 }

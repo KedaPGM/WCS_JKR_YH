@@ -181,6 +181,79 @@ namespace resource.track
             return tracks.Select(c => c.id).ToList();
         }
 
+        /// <summary>
+        /// 获取最小储砖轨道order
+        /// </summary>
+        /// <returns></returns>
+        public int GetMinOrder(ushort area, DeviceTypeE dt)
+        {
+            switch (dt)
+            {
+                case DeviceTypeE.上摆渡:
+                    return TrackList.FindAll(c => c.area == area
+                            && c.InType(TrackTypeE.储砖_出入, TrackTypeE.上砖轨道, TrackTypeE.储砖_出)).Min(c => c.order);
+
+                case DeviceTypeE.下摆渡:
+                    return TrackList.FindAll(c => c.area == area
+                            && c.InType(TrackTypeE.储砖_出入, TrackTypeE.下砖轨道, TrackTypeE.储砖_入)).Min(c => c.order);
+
+                default:
+                    return 0;
+            }
+        }
+
+        /// <summary>
+        /// 获取最大储砖轨道order
+        /// </summary>
+        /// <returns></returns>
+        public int GetMaxOrder(ushort area, DeviceTypeE dt)
+        {
+            switch (dt)
+            {
+                case DeviceTypeE.上摆渡:
+                    return TrackList.FindAll(c => c.area == area
+                            && c.InType(TrackTypeE.储砖_出入, TrackTypeE.上砖轨道, TrackTypeE.储砖_出)).Max(c => c.order);
+
+                case DeviceTypeE.下摆渡:
+                    return TrackList.FindAll(c => c.area == area
+                            && c.InType(TrackTypeE.储砖_出入, TrackTypeE.下砖轨道, TrackTypeE.储砖_入)).Max(c => c.order);
+
+                default:
+                    return 0;
+            }
+        }
+
+        /// <summary>
+        /// 根据order查找对应的储砖轨道ID
+        /// </summary>
+        /// <returns></returns>
+        public uint GetTrackIDByOrder(ushort area, int order)
+        {
+            return TrackList.Find(c => c.area == area && c.order == order &&
+            (c.Type == TrackTypeE.储砖_入 || c.Type == TrackTypeE.储砖_出 || c.Type == TrackTypeE.储砖_出入))?.id ?? 0;
+        }
+
+        /// <summary>
+        /// 获取轨道位置相对顺序
+        /// </summary>
+        /// <param name="trackid"></param>
+        /// <returns></returns>
+        public short GetTrackOrder(uint trackid)
+        {
+            return TrackList.Find(c => c.id == trackid)?.order ?? 0;
+        }
+
+        public bool IsUpAreaTrack(uint traid)
+        {
+            return TrackList.Exists(c => c.id == traid &&
+                (c.Type == TrackTypeE.上砖轨道 || c.Type == TrackTypeE.储砖_出 || c.Type == TrackTypeE.储砖_出入 || c.Type == TrackTypeE.摆渡车_出));
+        }
+        public bool IsDownAreaTrack(uint traid)
+        {
+            return TrackList.Exists(c => c.id == traid &&
+                (c.Type == TrackTypeE.下砖轨道 || c.Type == TrackTypeE.储砖_入 || c.Type == TrackTypeE.储砖_出入 || c.Type == TrackTypeE.摆渡车_入));
+        }
+
         #endregion
 
         #region[更改]

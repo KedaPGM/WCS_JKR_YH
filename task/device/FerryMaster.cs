@@ -117,18 +117,44 @@ namespace task.device
                                 task.DoSiteQuery(set.QueryPos);
                             }
 
+                            #region 失去位置信息
+                            uint ctid = task.GetFerryCurrentTrackId();
+                            Track ct = PubMaster.Track.GetTrack(ctid);
+                            if (ct == null || ctid == 0 || ctid.Equals(0) || ctid.CompareTo(0) == 0)
+                            {
+                                PubMaster.Warn.AddDevWarn(WarningTypeE.FerryNoLocation, (ushort)task.ID);
+                            }
+                            else
+                            {
+                                PubMaster.Warn.RemoveDevWarn(WarningTypeE.FerryNoLocation, (ushort)task.ID);
+                            }
+                            #endregion
+
+                            // 手动清记录目标点
+                            if (task.DevStatus.WorkMode == DevOperateModeE.手动 && task.DevStatus.TargetSite == 0)
+                            {
+                                task.RecordTraId = 0;
+                                task.DevTcp.AddStatusLog(string.Format("手动-清除记录目标"));
+                            }
+
                             if (task.Status == DevFerryStatusE.停止 && task.DevStatus.CurrentTask == DevFerryTaskE.定位)
                             {
                                 //上砖测轨道ID 或 下砖测轨道ID
                                 if (task.UpTrackId == PubMaster.Track.GetTrackId(task.DevStatus.TargetSite) && task.IsUpLight)
                                 {
-                                    Thread.Sleep(500);
+                                    Thread.Sleep(1000);
                                     task.DoStop();
                                 }
 
                                 if (task.DownTrackId == PubMaster.Track.GetTrackId(task.DevStatus.TargetSite) && task.IsDownLight)
                                 {
-                                    Thread.Sleep(500);
+                                    Thread.Sleep(1000);
+                                    task.DoStop();
+                                }
+
+                                if (task.DevStatus.CurrentTask == task.DevStatus.FinishTask && task.DevStatus.TargetSite == 0)
+                                {
+                                    Thread.Sleep(1000);
                                     task.DoStop();
                                 }
                             }
@@ -158,6 +184,21 @@ namespace task.device
                 }
             }
             finally { Monitor.Exit(_obj); }
+        }
+
+        internal FerryTask GetFerry(uint devid)
+        {
+            return DevList.Find(c => c.ID == devid);
+        }
+
+        /// <summary>
+        /// 摆渡车当前对应轨道ID
+        /// </summary>
+        /// <param name="devid"></param>
+        /// <returns></returns>
+        public uint GetFerryCurrentTrackId(uint devid)
+        {
+            return DevList.Find(c => c.ID == devid)?.GetFerryCurrentTrackId() ?? 0;
         }
 
         #endregion
@@ -475,31 +516,22 @@ namespace task.device
                 {
                     //查看是否有小车正在上摆渡车
                     FerryTask task = DevList.Find(c => c.ID == ferryid);
-                    if (!CheckFerryStatus(task, out result))
+
+                    if (!IsAllowToMove(task, trackid, out result))
                     {
+                        task.DoStop();
                         return false;
                     }
 
-                    if (!IsLoadOrEmpty(task, out result))
+                    // 避让不让发指令
+                    if (ExistsAvoid(task, trackid, out result, false))
                     {
+                        mlog.Info(true, string.Format(@"定位车【{0}】,存在避让【{1}】", task.Device.name, result));
                         return false;
                     }
 
-                    if (task.IsUpLight 
-                        && PubTask.Carrier.HaveCarrierTaskInTrack(task.UpTrackId, DevCarrierTaskE.后退至摆渡车))
-                    {
-                        result = "小车正在上摆渡车";
-                        return false;
-                    }
-
-                    if (task.IsDownLight
-                        && PubTask.Carrier.HaveCarrierTaskInTrack(task.DownTrackId, DevCarrierTaskE.前进至摆渡车))
-                    {
-                        result = "小车正在上摆渡车";
-                        return false;
-                    }
-
-                    task.DoLocate(ferrycode);
+                    task.DoLocate(ferrycode, trackid);
+                    mlog.Info(true, string.Format(@"定位车【{0}】, PC手动", task.Device.name));
                     return true;
                 }
                 finally
@@ -521,35 +553,6 @@ namespace task.device
             if (ferryid > 0)
             {
                 StopFerry(ferryid, out string _);
-            }
-        }
-
-        public bool DoLocateFerry(uint id, ushort ferry_code, out string result)
-        {
-            if (!Monitor.TryEnter(_obj, TimeSpan.FromSeconds(2)))
-            {
-                result = "稍后再试！";
-                return false;
-            }
-            try
-            {
-                FerryTask task = DevList.Find(c => c.ID == id);
-                if (!CheckFerryStatus(task, out result))
-                {
-                    return false;
-                }
-
-                if (!IsLoadOrEmpty(task, out result))
-                {
-                    return false;
-                }
-
-                task.DoLocate(ferry_code);
-                return true;
-            }
-            finally
-            {
-                Monitor.Exit(_obj);
             }
         }
 
@@ -617,32 +620,18 @@ namespace task.device
             try
             {
                 FerryTask task = DevList.Find(c => c.ID == ferryid);
-                if (task == null)
-                {
-                    result = "找不到设备";
-                    return false;
-                }
-
-                if (!CheckFerryStatus(task, out result))
+                if (!IsAllowToMove(task, to_track_id, out result))
                 {
                     return false;
                 }
 
-                //if(!IsLoadOrEmpty(task, out result))
-                //{
-                //    return false;
-                //}
-
-                if(task.Status == DevFerryStatusE.停止 
-                    && (task.DevStatus.CurrentTask == task.DevStatus.FinishTask
-                        || task.DevStatus.CurrentTask == DevFerryTaskE.未知
-                        || ((task.DevStatus.CurrentTask == DevFerryTaskE.终止 || task.DevStatus.CurrentTask == DevFerryTaskE.定位)
-                            && (task.DevStatus.FinishTask == DevFerryTaskE.未知 || task.DevStatus.FinishTask == DevFerryTaskE.定位))))
+                if (task.IsNotDoingTask)
                 {
                     if (task.DevStatus.TargetSite != 0 && PubMaster.Track.GetTrackId(task.DevStatus.TargetSite) != to_track_id)
                     {
-                        Thread.Sleep(500);
+                        Thread.Sleep(1000);
                         task.DoStop();
+                        result = "消除残留目标点！";
                         return false;
                     }
 
@@ -655,7 +644,8 @@ namespace task.device
                         }
                         else
                         {
-                            Thread.Sleep(500);
+                            Thread.Sleep(1000);
+                            result = "到位执行终止！";
                             task.DoStop();
                         }
 
@@ -670,109 +660,122 @@ namespace task.device
                         }
                         else
                         {
-                            Thread.Sleep(500);
+                            Thread.Sleep(1000);
+                            result = "到位执行终止！";
                             task.DoStop();
                         }
 
                         return false;
                     }
 
-                    // 定位前检查同轨道的摆渡车
-                    List<AreaDevice> areatras = PubMaster.Area.GetAreaDevList(task.AreaId, task.Type);
-                    //List<AreaDevice> areatras = PubMaster.Area.GetAreaDevListWithType(task.Type);
-                    uint taskTrackId;
-                    short trackOrder;
-                    short takeTrackOrder = PubMaster.Track.GetTrack(to_track_id)?.order ?? 0;
-                    int safedis = PubMaster.Dic.GetDtlIntCode("FerryAvoidNumber");
-                    foreach (AreaDevice ferry in areatras)
+                    #region 交管 
+                    if (ExistsAvoid(task, to_track_id, out result))
                     {
-                        if (ferry.device_id != ferryid)
-                        {
-
-                            //同区域另一台摆渡车
-                            FerryTask taskB = DevList.Find(c => c.ID == ferry.device_id);
-                            if (!CheckFerryStatus(taskB, out string r))
-                            {
-                                continue;
-                            }
-
-                            //另一台摆渡车对着的轨道id
-                            uint taskBTrackId = taskB.GetFerryCurrentTrackId();
-
-                            short trackBOrder = PubMaster.Track.GetTrack(taskBTrackId)?.order ?? 0;
-
-                            //另一台摆渡车的目的轨道的顺序
-                            short taskBTargetOrder = PubMaster.Track.GetTrackByCode(taskB.DevStatus.TargetSite)?.order ?? 0;
-
-                            //当前摆渡车对着的轨道id
-                            taskTrackId = task.GetFerryCurrentTrackId();
-
-                            //当前摆渡车对着的轨道的顺序
-                            trackOrder = PubMaster.Track.GetTrack(taskTrackId)?.order ?? 0;
-
-                            if (trackBOrder == 0 || trackOrder == 0)
-                            {
-                                return false;
-                            }
-
-                            int leftCompare, rightCompare;
-                            if (trackOrder >= takeTrackOrder)
-                            {
-                                leftCompare = takeTrackOrder - safedis;
-                                rightCompare = trackOrder + safedis;
-                            }
-                            else
-                            {
-                                leftCompare = trackOrder - safedis;
-                                rightCompare = takeTrackOrder + safedis;
-                            }
-                            leftCompare = leftCompare < 0 ? 0 : leftCompare;
-                            switch (taskB.Status)
-                            {
-                                case DevFerryStatusE.停止:
-                                    //当前摆渡车要前进
-                                    if ((leftCompare < trackBOrder && trackBOrder < rightCompare)
-                                           || (leftCompare < taskBTargetOrder && taskBTargetOrder < rightCompare))
-                                    {
-                                        if (taskB.IsFerryLock())
-                                        {
-                                            return false;
-                                        }
-                                        uint avoidTrackId;
-                                        if (trackOrder < takeTrackOrder)
-                                        {
-                                            avoidTrackId = PubMaster.Track.GetTrackIdByDifference(to_track_id, safedis, true);
-                                        }
-                                        else
-                                        {
-                                            avoidTrackId = PubMaster.Track.GetTrackIdByDifference(to_track_id, safedis, false);
-                                        }
-                                        if (PubMaster.Track.GetTrackFerryCode(avoidTrackId, task.Type, out ushort newtrackferrycode, out result))
-                                        {
-                                            taskB.DoLocate(newtrackferrycode);
-                                            return false;
-                                        }
-                                    }
-                                    break;
-                                case DevFerryStatusE.前进:
-                                case DevFerryStatusE.后退:
-                                    //当前摆渡车在另一台摆渡车的后面
-                                    if ((leftCompare < trackBOrder && trackBOrder < rightCompare)
-                                           || (leftCompare < taskBTargetOrder && taskBTargetOrder < rightCompare))
-                                    {
-                                        return false;
-                                    }
-                                    break;
-                                default:
-                                    return false;
-                            }
-
-                        }
+                        mlog.Info(true, string.Format(@"定位车【{0}】,存在避让【{1}】", task.Device.name, result));
+                        return false;
                     }
+                    mlog.Info(true, string.Format(@"定位车【{0}】,不需避让【{1}】", task.Device.name, result));
+                    #endregion
+
+                    #region // 定位前检查同轨道的摆渡车 - 停用
+
+                    //List<AreaDevice> areatras = PubMaster.Area.GetAreaDevList(task.AreaId, task.Type);
+                    ////List<AreaDevice> areatras = PubMaster.Area.GetAreaDevListWithType(task.Type);
+                    //uint taskTrackId;
+                    //short trackOrder;
+                    //short takeTrackOrder = PubMaster.Track.GetTrack(to_track_id)?.order ?? 0;
+                    //int safedis = PubMaster.Dic.GetDtlIntCode("FerryAvoidNumber");
+                    //foreach (AreaDevice ferry in areatras)
+                    //{
+                    //    if (ferry.device_id != ferryid)
+                    //    {
+
+                    //        //同区域另一台摆渡车
+                    //        FerryTask taskB = DevList.Find(c => c.ID == ferry.device_id);
+                    //        if (!CheckFerryStatus(taskB, out string r))
+                    //        {
+                    //            continue;
+                    //        }
+
+                    //        //另一台摆渡车对着的轨道id
+                    //        uint taskBTrackId = taskB.GetFerryCurrentTrackId();
+
+                    //        short trackBOrder = PubMaster.Track.GetTrack(taskBTrackId)?.order ?? 0;
+
+                    //        //另一台摆渡车的目的轨道的顺序
+                    //        short taskBTargetOrder = PubMaster.Track.GetTrackByCode(taskB.DevStatus.TargetSite)?.order ?? 0;
+
+                    //        //当前摆渡车对着的轨道id
+                    //        taskTrackId = task.GetFerryCurrentTrackId();
+
+                    //        //当前摆渡车对着的轨道的顺序
+                    //        trackOrder = PubMaster.Track.GetTrack(taskTrackId)?.order ?? 0;
+
+                    //        if (trackBOrder == 0 || trackOrder == 0)
+                    //        {
+                    //            return false;
+                    //        }
+
+                    //        int leftCompare, rightCompare;
+                    //        if (trackOrder >= takeTrackOrder)
+                    //        {
+                    //            leftCompare = takeTrackOrder - safedis;
+                    //            rightCompare = trackOrder + safedis;
+                    //        }
+                    //        else
+                    //        {
+                    //            leftCompare = trackOrder - safedis;
+                    //            rightCompare = takeTrackOrder + safedis;
+                    //        }
+                    //        leftCompare = leftCompare < 0 ? 0 : leftCompare;
+                    //        switch (taskB.Status)
+                    //        {
+                    //            case DevFerryStatusE.停止:
+                    //                //当前摆渡车要前进
+                    //                if ((leftCompare < trackBOrder && trackBOrder < rightCompare)
+                    //                       || (leftCompare < taskBTargetOrder && taskBTargetOrder < rightCompare))
+                    //                {
+                    //                    if (taskB.IsFerryLock())
+                    //                    {
+                    //                        return false;
+                    //                    }
+                    //                    uint avoidTrackId;
+                    //                    if (trackOrder < takeTrackOrder)
+                    //                    {
+                    //                        avoidTrackId = PubMaster.Track.GetTrackIdByDifference(to_track_id, safedis, true);
+                    //                    }
+                    //                    else
+                    //                    {
+                    //                        avoidTrackId = PubMaster.Track.GetTrackIdByDifference(to_track_id, safedis, false);
+                    //                    }
+                    //                    if (PubMaster.Track.GetTrackFerryCode(avoidTrackId, task.Type, out ushort newtrackferrycode, out result))
+                    //                    {
+                    //                        taskB.DoLocate(newtrackferrycode);
+                    //                        return false;
+                    //                    }
+                    //                }
+                    //                break;
+                    //            case DevFerryStatusE.前进:
+                    //            case DevFerryStatusE.后退:
+                    //                //当前摆渡车在另一台摆渡车的后面
+                    //                if ((leftCompare < trackBOrder && trackBOrder < rightCompare)
+                    //                       || (leftCompare < taskBTargetOrder && taskBTargetOrder < rightCompare))
+                    //                {
+                    //                    return false;
+                    //                }
+                    //                break;
+                    //            default:
+                    //                return false;
+                    //        }
+
+                    //    }
+                    //}
+
+                    #endregion
 
                     if (PubMaster.Track.GetTrackFerryCode(to_track_id, task.Type, out ushort trackferrycode, out result))
                     {
-                        task.DoLocate(trackferrycode);
+                        task.DoLocate(trackferrycode, to_track_id);
                     }
                 }
             }
@@ -804,6 +807,206 @@ namespace task.device
                 Monitor.Exit(_obj);
             }
         }
+
+        /// <summary>
+        /// 是否存在避让
+        /// </summary>
+        public bool ExistsAvoid(FerryTask task, uint to_track_id, out string msg, bool isAdd = true)
+        {
+            // 确认是否已被交管
+            if (PubTask.TrafficControl.ExistsRestricted(task.ID))
+            {
+                msg = "被交管中";
+                return true;
+            }
+
+            // 同区域内其他同类型的摆渡车
+            List<FerryTask> ferries = DevList.FindAll(c => c.AreaId == task.AreaId && c.Type == task.Type && c.ID != task.ID);
+            if (ferries == null || ferries.Count == 0)
+            {
+                msg = "无车干扰";
+                return false;
+            }
+
+            // 当前轨道ID
+            uint TrackId = task.GetFerryCurrentTrackId();
+
+            #region 失去位置信息
+            Track ct = PubMaster.Track.GetTrack(TrackId);
+            if (ct == null || TrackId == 0 || TrackId.Equals(0) || TrackId.CompareTo(0) == 0)
+            {
+                msg = task.Device.name + "：没有当前位置信息";
+                return true;
+            }
+
+            Track tt = PubMaster.Track.GetTrack(to_track_id);
+            if (tt == null || to_track_id == 0 || to_track_id.Equals(0) || to_track_id.CompareTo(0) == 0)
+            {
+                msg = task.Device.name + "：找不到目的位置信息";
+                return true;
+            }
+            #endregion
+
+            // 当前摆渡车对着的轨道的顺序
+            short fromOrder = ct?.order ?? 0;
+            // 目的轨道顺序
+            short toOrder = tt?.order ?? 0;
+
+            if (fromOrder == 0 || fromOrder.Equals(0) || fromOrder.CompareTo(0) == 0
+                || toOrder == 0 || toOrder.Equals(0) || toOrder.CompareTo(0) == 0)
+            {
+                // 无顺序 不动
+                msg = "没有轨道避让顺序";
+                return true;
+            }
+
+            // 摆渡间安全距离 轨道数
+            int safedis = PubMaster.Dic.GetDtlIntCode(DicTag.FerryAvoidNumber);
+            // 摆渡轨道最小值（默认相对位置顺序以 1 记起）
+            int mindis = PubMaster.Track.GetMinOrder((ushort)task.AreaId, task.Type);
+            // 摆渡轨道最大值
+            int maxdis = PubMaster.Track.GetMaxOrder((ushort)task.AreaId, task.Type);
+
+            // 当前摆渡车移动区间 
+            int limitMin, limitMax, standbyOrder;
+            if (fromOrder > toOrder)
+            {
+                // 后退的安全范围
+                limitMin = (toOrder - safedis) < mindis ? mindis : (toOrder - safedis);
+                limitMax = fromOrder;
+                // 待命点
+                standbyOrder = limitMin;
+            }
+            else
+            {
+                // 前进的安全范围
+                limitMin = fromOrder;
+                limitMax = (toOrder + safedis) > maxdis ? maxdis : (toOrder + safedis);
+                // 待命点
+                standbyOrder = limitMax;
+            }
+
+            if (standbyOrder == 0 || standbyOrder.Equals(0) || standbyOrder.CompareTo(0) == 0)
+            {
+                msg = string.Format("[ {0} ]: 无法得到移动前其他车需避让到的安全待命点", task.Device.name);
+                return true;
+            }
+
+            //循环判断 
+            foreach (FerryTask other in ferries)
+            {
+                // 停用了就不管？
+                if (!other.IsWorking && !other.IsEnable) continue;
+
+                // 其一摆渡当前轨道ID
+                uint otherTrackId = other.GetFerryCurrentTrackId();
+
+                #region 失去位置信息
+                Track ot = PubMaster.Track.GetTrack(otherTrackId);
+                if (ot == null || otherTrackId == 0 || otherTrackId.Equals(0) || otherTrackId.CompareTo(0) == 0)
+                {
+                    msg = other.Device.name + "：没有当前位置信息";
+                    return true;
+                }
+                #endregion
+
+                // 其一摆渡当前轨道顺序
+                short otherOrder = ot?.order ?? 0;
+
+                if (otherOrder == 0 || otherOrder.Equals(0) || otherOrder.CompareTo(0) == 0)
+                {
+                    // 无顺序 不动
+                    msg = other.Device.name + "没有当前轨道避让顺序";
+                    return true;
+                }
+
+                // 其一摆渡目的轨道顺序
+                short otherToOrder = PubMaster.Track.GetTrackByCode(other.DevStatus.TargetSite)?.order ?? 0;
+
+                // 使用 记录目标点
+                if (otherToOrder == 0 || otherToOrder.Equals(0) || otherToOrder.CompareTo(0) == 0)
+                {
+                    otherToOrder = PubMaster.Track.GetTrack(other.RecordTraId)?.order ?? 0;
+                }
+
+                // 记录
+                mlog.Info(true, string.Format(@"定位车[ {0} ]移动[ {1} - {2} ]移序[ {3} - {4} ]安全间距轨道数({5})范围[ {6} ~ {7} ], 同坑内另一车[ {8} ]移序[ {9} - {10} ]",
+                    task.Device.name, ct.name, tt.name,
+                    fromOrder, toOrder, safedis, limitMin, limitMax,
+                    other.Device.name, otherOrder, otherToOrder));
+
+                #region 【交管判断】
+                bool isOtherRunning = true; // other车在移动
+                if (otherToOrder == 0 || otherToOrder.Equals(0) || otherToOrder.CompareTo(0) == 0) isOtherRunning = false; // other车停止
+
+                // 1. other车的当前位置在安全范围内？
+                if (limitMin < otherOrder && otherOrder < limitMax)
+                {
+                    // 范围内则考虑交管
+                    if (isOtherRunning)
+                    {
+                        // 移动中不能生成交管，跳过
+                        msg = string.Format("同坑内另一台车[ {0} ]: 是阻碍并在移动中", other.Device.name);
+                        return true;
+                    }
+                    else
+                    {
+                        // 确认是否已被同类型交管
+                        if (PubTask.TrafficControl.ExistsTrafficControl(TrafficControlTypeE.摆渡车交管摆渡车, other.ID, out uint fid))
+                        {
+                            msg = string.Format("同坑内另一台车[ {0} ]: 已与[ {1} ]交管",
+                                 other.Device.name, PubMaster.Device.GetDeviceName(fid));
+                            return true;
+                        }
+
+                        // 安全待命点不变
+                        if (standbyOrder == otherOrder)
+                        {
+                            msg = string.Format("同坑内另一台车[ {0} ]: 已到位安全待命点", other.Device.name);
+                            return true;
+                        }
+
+                        // 没有移动则生成交管
+                        if (isAdd)
+                        {
+                            uint standbyTraID = PubMaster.Track.GetTrackIDByOrder((ushort)other.AreaId, standbyOrder);
+                            // 加入交管
+                            PubTask.TrafficControl.AddTrafficControl(new TrafficControl()
+                            {
+                                area = (ushort)task.AreaId,
+                                TrafficControlType = TrafficControlTypeE.摆渡车交管摆渡车,
+                                restricted_id = task.ID,
+                                control_id = other.ID,
+                                from_track_id = otherTrackId,
+                                to_track_id = standbyTraID
+                            }, out msg);
+                            return true; // 限制仅生成一个交管
+                        }
+                        else
+                        {
+                            // 只提示，不加入交管
+                            msg = string.Format("同坑内另一台车[ {0} ]: 是阻碍", other.Device.name);
+                            return true;
+                        }
+                    }
+                }
+                // 2. 移动中的other车，目的位置在安全范围内？
+                else
+                {
+                    if (isOtherRunning && limitMin < otherToOrder && otherToOrder < limitMax)
+                    {
+                        // 移动中不能生成交管，跳过
+                        msg = string.Format("同坑内另一台车[ {0} ]: 是阻碍并在移动中", other.Device.name);
+                        return true;
+                    }
+                }
+                #endregion
+
+            }
+            msg = "无检测到避让";
+            return false;
+        }
+
         #endregion
 
         #region[发送信息]
@@ -1203,6 +1406,73 @@ namespace task.device
             result = "";
             return true;
         }
+
+        /// <summary>
+        /// 摆渡车是否可移动
+        /// </summary>
+        public bool IsAllowToMove(FerryTask task, uint totrackid, out string result)
+        {
+            // 检查摆渡车状态
+            if (!CheckFerryStatus(task, out result))
+            {
+                return false;
+            }
+            if (!IsLoadOrEmpty(task, out result))
+            {
+                return false;
+            }
+
+            if (task.Type == DeviceTypeE.上摆渡 && !PubMaster.Track.IsUpAreaTrack(totrackid))
+            {
+                result = string.Format("上摆渡，不能定位到轨道[ {0} ]", PubMaster.Track.GetTrackName(totrackid));
+                return false;
+            }
+
+            if (task.Type == DeviceTypeE.下摆渡 && !PubMaster.Track.IsDownAreaTrack(totrackid))
+            {
+                result = string.Format("下摆渡，不能定位到轨道[ {0} ]", PubMaster.Track.GetTrackName(totrackid));
+                return false;
+            }
+
+            // 检查是否存在目的位置移动
+            if (task.RecordTraId > 0 && task.RecordTraId != totrackid)
+            {
+                result = string.Format("摆渡车正移至[ {0} ]，等待到位完成或执行终止",
+                    PubMaster.Track.GetTrackName(task.RecordTraId));
+                return false;
+            }
+
+            //检查摆渡车对应的轨道，是否有运输车正在执行【上摆渡车的任务】 20210127
+            if (task.IsUpLight
+                && PubTask.Carrier.HaveCarrierTaskInTrack(task.UpTrackId, DevCarrierTaskE.后退至摆渡车))
+            {
+                result = "小车正在上摆渡车";
+                return false;
+            }
+
+            if (task.IsDownLight
+                && PubTask.Carrier.HaveCarrierTaskInTrack(task.DownTrackId, DevCarrierTaskE.前进至摆渡车))
+            {
+                result = "小车正在上摆渡车";
+                return false;
+            }
+
+            //找摆渡车上的运输车
+            //判断运输车是否在动  
+            //在动则返回false，不给摆渡车发任务  20210127
+            if (task.Load == DevFerryLoadE.载车)
+            {
+                //在摆渡车轨道上的运输车是否有状态不是停止的或者是手动的
+                if (PubTask.Carrier.IsCarrierMoveInTrack(task.LeftTrackId))
+                {
+                    result = "摆渡车上的运输车在运动/手动状态中/任务没有完成";
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         #endregion
 
         #region[启动/停止]

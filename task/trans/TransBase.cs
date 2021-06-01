@@ -333,7 +333,7 @@ namespace task.trans
             return TransList;
         }
 
-        public StockTrans GetTrans(int transid)
+        public StockTrans GetTrans(uint transid)
         {
             StockTrans stock = TransList.Find(c => c.id == transid);
             if (stock == null)

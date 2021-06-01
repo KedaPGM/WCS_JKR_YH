@@ -1218,7 +1218,6 @@ namespace task.trans
             Track track = PubTask.Carrier.GetCarrierTrack(trans.carrier_id);
             if (track == null) return;
             bool isload = PubTask.Carrier.IsLoad(trans.carrier_id);
-            uint ferryTraid;
             switch (trans.TransStaus)
             {
                 #region[移车中]

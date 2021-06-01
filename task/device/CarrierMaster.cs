@@ -280,6 +280,17 @@ namespace task.device
             uint trackid = DevList.Find(c => c.ID == carrier_id)?.TrackId ?? 0;
             return trackid > 0 ? PubMaster.Track.GetTrack(trackid) : null;
         }
+
+        /// <summary>
+        /// 获取运输车当前所在轨道ID
+        /// </summary>
+        /// <param name="carrier_id"></param>
+        /// <returns></returns>
+        internal uint GetCarrierTrackID(uint carrier_id)
+        {
+            return DevList.Find(c => c.ID == carrier_id)?.TrackId ?? 0;
+        }
+
         internal bool IsLoad(uint carrier_id)
         {
             return DevList.Exists(c => c.ID == carrier_id 
@@ -690,6 +701,7 @@ namespace task.device
                 }
             }
 
+            mlog.Info(true, string.Format(@"运输车【{0}】,操作【{1}】，PC手动", devid, carriertask));
             DoTask(devid, carriertask, isoversize);
             result = "";
             return true;
@@ -1570,6 +1582,14 @@ namespace task.device
             }
         }
         #endregion
+
+        internal bool IsCarrierMoveInTrack(uint trackid)
+        {
+            List<CarrierTask> carriers = DevList.FindAll(c => c.TrackId == trackid
+                                && (c.Status != DevCarrierStatusE.停止 || c.OperateMode == DevOperateModeE.手动 ||
+                                (c.Task != c.FinishTask && c.Task != DevCarrierTaskE.无)));
+            return carriers.Count > 0;
+        }
 
         internal void UpdateWorking(uint devId, bool working)
         {

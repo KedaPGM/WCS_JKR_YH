@@ -235,6 +235,11 @@ namespace socket.tcp
             Close();
         }
 
+        public void AddStatusLog(string log)
+        {
+            _mLog.Status(true, log);
+        }
+
         #region[抽象方法]
 
         internal abstract void SendMsg(SocketMsgTypeE type, SocketConnectStatusE status, IDevice device);

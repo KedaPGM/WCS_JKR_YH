@@ -60,7 +60,7 @@ namespace resource.module.modulesql
             return list;
         }
 
-        public StockTrans QueryStockTransById(int transid)
+        public StockTrans QueryStockTransById(uint transid)
         {
             List<StockTrans> list = new List<StockTrans>();
             string sql = string.Format("SELECT t.id, t.trans_type, t.trans_status, t.area_id, t.goods_id, t.take_track_id, t.give_track_id," +

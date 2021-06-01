@@ -25,6 +25,7 @@
         UpTileHaveNotStockToOut,//砖机找不到库存出库
         TrackEarlyFull,//轨道提前满砖报警
         UpTileHaveNoTrackToOut,//砖机找不到有砖轨道上砖
+        FerryNoLocation, //摆渡车没有位置信息
     }
 
     public enum CarrierWarnE 
