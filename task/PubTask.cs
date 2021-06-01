@@ -21,6 +21,7 @@ namespace task
             TileLifter = new TileLifterMaster();
             Trans = new TransMaster();
             Rf = new RfMaster();
+            TrafficControl = new TrafficControlMaster();
         }
 
         public static void Start()
