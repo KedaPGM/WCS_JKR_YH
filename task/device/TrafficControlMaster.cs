@@ -465,7 +465,7 @@ namespace task.device
                     }
 
                     // 载车 - 在任务的对应位置 则不能移动
-                    if (ferry.Load == DevFerryLoadE.载车)
+                    if (ferry.Load != DevFerryLoadE.空)
                     {
                         switch (trans.TransType)
                         {

@@ -322,6 +322,10 @@ namespace task.task
                         break;
                 }
             }
+
+            // 加上自己的轨道
+            trackIds.Add(LeftTrackId);
+
             return trackIds;
         }
 
