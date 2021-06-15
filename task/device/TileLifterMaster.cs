@@ -1269,11 +1269,12 @@ namespace task.device
                 case StrategyInE.同规同轨:
                     // 获取所有同策略砖机
                     List<uint> tileids = new List<uint>();
-                    foreach (TileLifterTask item in DevList.FindAll(c => c.InStrategy == task.InStrategy
+                    foreach (TileLifterTask item in DevList.FindAll(c => c.InStrategy == StrategyInE.同规同轨
                                 && c.ID != task.ID
-                                && (c.GoodsId == goodsId || c.Device.old_goodid == goodsId
-                                    || (nowgId > 0 && c.GoodsId == nowgId || c.Device.old_goodid == nowgId)
-                                    || (oldgId > 0 && c.GoodsId == oldgId || c.Device.old_goodid == oldgId))
+                                && (c.GoodsId == goodsId 
+                                    || c.Device.old_goodid == goodsId
+                                    || (nowgId > 0 && (c.GoodsId == nowgId || c.Device.old_goodid == nowgId))
+                                    || (oldgId > 0 && (c.GoodsId == oldgId || c.Device.old_goodid == oldgId)))
                                 ))
                     {
                         tileids.Add(item.ID);
