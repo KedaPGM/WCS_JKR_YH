@@ -581,7 +581,7 @@ namespace task.device
                                 }
                             }
 
-                            bool iseffect = CheckInStrategy(task, gid);
+                            bool iseffect = CheckInStrategy(task, gid, task.GoodsId, task.Device.old_goodid);
 
                             if (!iseffect // && mTimer.IsOver(TimerTag.DownTileLifterHaveGoods, task.ID, Site_1, 3)
                                 )
@@ -826,7 +826,7 @@ namespace task.device
                         }
                     }
 
-                    bool iseffect = CheckInStrategy(task, gid);
+                    bool iseffect = CheckInStrategy(task, gid, task.GoodsId, task.Device.old_goodid);
 
                     if (!iseffect 
                         //&& mTimer.IsOver(TimerTag.DownTileLifterHaveGoods, task.ID, Site_2, 3)
@@ -1247,7 +1247,7 @@ namespace task.device
         /// </summary>
         /// <param name="task"></param>
         /// <returns></returns>
-        private bool CheckInStrategy(TileLifterTask task, uint goodsId)
+        private bool CheckInStrategy(TileLifterTask task, uint goodsId, uint nowgId = 0, uint oldgId = 0)
         {
             bool iseffect = false;
 
@@ -1267,7 +1267,19 @@ namespace task.device
                 case StrategyInE.优先下砖:
                     break;
                 case StrategyInE.同规同轨:
-                    iseffect = PubTask.Trans.HaveInGoods(task.AreaId, goodsId, TransTypeE.入库);
+                    // 获取所有同策略砖机
+                    List<uint> tileids = new List<uint>();
+                    foreach (TileLifterTask item in DevList.FindAll(c => c.InStrategy == task.InStrategy
+                                && c.ID != task.ID
+                                && (c.GoodsId == goodsId || c.Device.old_goodid == goodsId
+                                    || (nowgId > 0 && c.GoodsId == nowgId || c.Device.old_goodid == nowgId)
+                                    || (oldgId > 0 && c.GoodsId == oldgId || c.Device.old_goodid == oldgId))
+                                ))
+                    {
+                        tileids.Add(item.ID);
+                    }
+
+                    iseffect = PubTask.Trans.HaveInTiles(task.AreaId, goodsId, TransTypeE.入库, tileids);
                     break;
             }
             return iseffect;

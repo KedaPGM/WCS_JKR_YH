@@ -428,6 +428,32 @@ namespace task.trans
             return true;
         }
 
+        internal bool HaveInTiles(uint areaId, uint goodsId, TransTypeE tasktype, List<uint> tileids)
+        {
+            if (Monitor.TryEnter(_to, TimeSpan.FromSeconds(1)))
+            {
+                try
+                {
+                    if (tileids != null && tileids.Count > 0)
+                    {
+                        return TransList.Exists(c => !c.finish
+                                && c.area_id == areaId && c.TransType == tasktype
+                                && tileids.Contains(c.tilelifter_id));
+                    }
+                    else
+                    {
+                        return TransList.Exists(c => !c.finish && c.area_id == areaId
+                                        && c.TransType == tasktype && c.goods_id == goodsId);
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(_to);
+                }
+            }
+            return true;
+        }
+
         internal bool HaveInTileTrack(uint trackid)
         {
             if (Monitor.TryEnter(_to, TimeSpan.FromSeconds(1)))
