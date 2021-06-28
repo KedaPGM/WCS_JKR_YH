@@ -469,6 +469,28 @@ namespace task.trans
             }
             return true;
         }
+
+        /// <summary>
+        /// 只允许干一个砖机的任务
+        /// </summary>
+        /// <param name="devid"></param>
+        /// <returns></returns>
+        public bool IsLifterOnly(uint devid)
+        {
+            List<uint> ids;
+            // 1 2 3 一组， 4 5 6 一组
+            if (devid < 4)
+            {
+                ids = new List<uint> {1, 2, 3};
+            }
+            else
+            {
+                ids = new List<uint> {4, 5, 6};
+            }
+            
+            return TransList.Exists(c => !c.finish && ids.Contains(c.tilelifter_id));
+        }
+
         #endregion
 
         #endregion

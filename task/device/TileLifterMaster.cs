@@ -537,6 +537,12 @@ namespace task.device
                 return;
             }
 
+            // 写死算了，真的麻烦
+            if (task.Type == DeviceTypeE.下砖机 && PubTask.Trans.IsLifterOnly(task.ID))
+            {
+                return;
+            }
+
             #endregion
 
             #region[工位1有需求]
