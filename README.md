@@ -1,5 +1,5 @@
 # WcsFixPlatform[ 储砖调度系统 ]
- 
+
 
 
 
@@ -15,13 +15,13 @@
 ## 数据库更新:
 
 1. 砖机轨道ID
-```
+```mysql
 INSERT INTO `diction_dtl`(`id`, `diction_id`, `code`, `name`, `int_value`
 , `bool_value`) VALUES (53, 1, 'NewTileTrackId', '生成砖机轨道ID', NULL, b'0')
 ```
 
 2. 修改砖机轨道表结构
-```
+```mysql
 ALTER TABLE `tile_track` ADD COLUMN `id` int(11) UNSIGNED NOT NULL COMMENT '砖机轨道' FIRST;
 ALTER TABLE `tile_track`DROP PRIMARY KEY;
 ALTER TABLE `tile_track` ADD PRIMARY KEY (`id`) ;
@@ -54,13 +54,13 @@ ALTER TABLE `tile_track` DROP COLUMN `enable`;
 
 ## 数据库更新:
 1. 设备表添加作业模式(work_type)，砖机设备使用. 值：0代表按规格上砖， 1代码按轨道上砖
-```
+```mysql
 ALTER TABLE `device` ADD COLUMN `work_type` tinyint(3) 
 UNSIGNED NULL COMMENT '作业类型\r\n砖机：0按规格 1按轨道' AFTER `do_work`;
 ```
 2. 添加砖机上砖轨道表
 
-```
+```mysql
 CREATE TABLE `tile_track` (
   `tile_id` int(11) unsigned NOT NULL COMMENT '砖机ID',
   `track_id` int(11) unsigned NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE `tile_track` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 ```
 3. 添加字典数据
-```
+```mysql
 INSERT INTO `diction_dtl`(`id`, `diction_id`, `code`, `name`, `int_value`, `bool_value`, 
 `string_value`) VALUES (52, 3, 'UpTileHaveNoTrackToOut', '砖机找不到轨道上砖', NULL, b'', 
 '砖机找不到轨道上砖')
@@ -90,18 +90,35 @@ INSERT INTO `diction_dtl`(`id`, `diction_id`, `code`, `name`, `int_value`, `bool
 
 ## 数据库更新:
 1. 轨道添加提前满砖信息，满砖时间
-```
+```mysql
 ALTER TABLE `track` ADD COLUMN `early_full` bit NULL COMMENT '提前满砖' AFTER `alert_trans`;
 ALTER TABLE `track` ADD COLUMN `full_time` datetime NULL COMMENT '满砖时间' AFTER `early_full`;
 ```
 2. 区域表添加 轨道未达到满砖数
 
-```
+```mysql
 ALTER TABLE `area` ADD COLUMN `full_qty` tinyint UNSIGNED NULL COMMENT '轨道未达到满砖警告数' AFTER `carriertype`;
 ```
 3. 添加检查轨道是否提前满砖报警信息
-```
+```mysql
 INSERT INTO `diction_dtl`(`id`, `diction_id`, `code`, `name`, `int_value`, `bool_value`, `string_value`,
 `double_value`, `uint_value`, `order`, `updatetime`) VALUES (51, 3, 'TrackEarlyFull', '请检查轨道是否提前满砖了',
 NULL, b'0', '请检查轨道是否提前满砖了', NULL, NULL, NULL, NULL);
 ```
+
+
+
+# **[2020-10-18 : 提前满砖警告]**
+
+## 报警添加线路字段，等级字段
+
+```mysql
+ALTER TABLE `warning` ADD COLUMN `level` TINYINT(3) UNSIGNED NULL COMMENT '等级';
+```
+
+## 报警字典添加等级
+
+```mysql
+ALTER TABLE `diction_dtl` ADD COLUMN `level` tinyint(3) UNSIGNED NULL COMMENT '等级';
+```
+

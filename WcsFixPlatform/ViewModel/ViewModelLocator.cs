@@ -4,6 +4,7 @@ using resource;
 using System;
 using System.Windows;
 using task;
+using tool.appconfig;
 using wcs.Service;
 using wcs.ViewModel.platform.area;
 using wcs.ViewModel.platform.stock;
@@ -63,6 +64,7 @@ namespace wcs.ViewModel
             //SimpleIoc.Default.Register<DeviceEditViewModel>();
             //SimpleIoc.Default.Register<DeviceViewModel>();
 
+            GlobalWcsDataConfig.Init();
             PubMaster.Init();
             PubTask.Init();
         }

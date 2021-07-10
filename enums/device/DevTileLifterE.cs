@@ -23,7 +23,8 @@
         查询,
         介入1,
         介入2,
-        转产
+        转产,
+        开关灯,
     }
 
     public enum DevLifterGoodsE
@@ -39,4 +40,9 @@
         完成
     }
 
+    public enum TileLightShiftE
+    {
+        灯关,
+        灯开
+    }
 }

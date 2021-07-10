@@ -24,6 +24,15 @@ namespace socket.process
         public byte Goods2;   //工位2品种
         public byte ShiftStatus;   //转产状态
         public byte ShiftAccept;   //转产接收状态
+
+        //--2021-07-10 添加砖机预留字段
+        public byte AlertLightStatus;       //报警灯状态
+        public byte Reserve2;       //预留2
+        public byte Reserve3;       //预留3
+        public byte Reserve4;       //预留4
+        public byte Reserve5;       //预留5
+        //--2021-07-10 添加砖机预留字段
+
         public ushort Tail; //命令字尾【0xFF,0xFE】
     }
 
@@ -74,6 +83,11 @@ namespace socket.process
             mDev.Goods2 = (DevLifterGoodsE)st.Goods2;
             mDev.ShiftStatus = (TileShiftStatusE)st.ShiftStatus;
             mDev.ShiftAccept = st.ShiftAccept == 1;
+            mDev.AlertLightStatus = st.AlertLightStatus;
+            mDev.reserve2 = st.Reserve2;
+            mDev.reserve3 = st.Reserve3;
+            mDev.reserve4 = st.Reserve4;
+            mDev.reserve5 = st.Reserve5;
 
             return mDev;
         }

@@ -19,6 +19,15 @@ namespace module.device
         private byte goods2;   //工位2品种
         private byte shiftstatus;   //转产状态
         private bool shiftaccept;   //转产接收状态
+
+        //--2021-07-10 添加砖机预留字段
+        public byte alertlightstatus;       //报警灯状态
+        public byte reserve2;       //预留2
+        public byte reserve3;       //预留3
+        public byte reserve4;       //预留4
+        public byte reserve5;       //预留5
+        //--2021-07-10 添加砖机预留字段
+
         #endregion
 
         #region[属性]
@@ -105,14 +114,19 @@ namespace module.device
             get => shiftaccept;
         }
 
+        public byte AlertLightStatus
+        {
+            get => alertlightstatus;
+            set => Set(ref alertlightstatus, value);
+        }
         #endregion
 
         #region[日志]
 
         public override string ToString()
         {
-            return string.Format("货物1：{0}, 货物2：{1}, 需求1：{2}, 需求2：{3}, 满砖：{4}, 现有：{5}, 介入1：{6}, 介入2：{7}, 模式：{8}, 工位1：{9}, 工位2：{10}, 转产：{11}, 转产接收：{12}"
-                   , S(Load1), S(Load2), S(Need1), S(Need2), FullQty, RecentQty, S(Involve1), S(Involve2), OperateMode, Goods1, Goods2, ShiftStatus, S(ShiftAccept));
+            return string.Format("货物1：{0}, 货物2：{1}, 需求1：{2}, 需求2：{3}, 满砖：{4}, 现有：{5}, 介入1：{6}, 介入2：{7}, 模式：{8}, 工位1：{9}, 工位2：{10}, 转产：{11}, 转产接收：{12}, 灯[ {13} ]"
+                   , S(Load1), S(Load2), S(Need1), S(Need2), FullQty, RecentQty, S(Involve1), S(Involve2), OperateMode, Goods1, Goods2, ShiftStatus, S(ShiftAccept), AlertLightStatus);
         }
 
         private string S(bool v)

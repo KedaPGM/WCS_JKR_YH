@@ -120,7 +120,7 @@ namespace task
                     track_id = (ushort)trackid
                 };
                 string devname = PubMaster.Device.GetDeviceName(devid);
-                string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString());
+                string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString(), out byte level);
                 if (trackid > 0)
                 {
                     string trackname = PubMaster.Track.GetTrackName(trackid);
@@ -130,6 +130,7 @@ namespace task
                 {
                     warn.content = devname + ": " + warnmsg;
                 }
+                warn.level = level;
                 AddWaring(warn);
             }
         }
@@ -161,8 +162,9 @@ namespace task
                     track_id = alertidx
                 };
                 string devname = PubMaster.Device.GetDeviceName(devid);
-                string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString());
+                string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString(), out byte level);
                 warn.content = devname + ": " + warnmsg;
+                warn.level = level;
                 AddWaring(warn);
             }
         }
@@ -200,8 +202,9 @@ namespace task
                     trans_id = transid
                 };
                 string devname = PubMaster.Device.GetDeviceName(devid);
-                string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString());
+                string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString(), out byte level);
                 warn.content = devname + ": " + warnmsg;
+                warn.level = level;
                 AddWaring(warn);
             }
         }
@@ -222,8 +225,9 @@ namespace task
                     type = (byte)warntype,
                 };
                 string traname = trackname ?? PubMaster.Track.GetTrackName(trackid);
-                string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString());
+                string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString(), out byte level);
                 warn.content = traname + ": " + warnmsg;
+                warn.level = level;
                 AddWaring(warn);
             }
         }
@@ -246,6 +250,26 @@ namespace task
             }
         }
 
+        #endregion
+
+
+        #region[判断信息]
+
+
+        public bool HaveDevWarn(uint devid, ushort level)
+        {
+            return List.Exists(c => c.dev_id == devid && c.level >= level);
+        }
+
+        public bool HaveAreaWarn(uint areaid, ushort level)
+        {
+            return List.Exists(c => c.area_id == areaid && c.level >= level);
+        }
+
+        public bool HaveAreaLineWarn(uint areaid, ushort lineid, ushort level)
+        {
+            return List.Exists(c => c.area_id == areaid && c.level >= level);
+        }
         #endregion
     }
 }

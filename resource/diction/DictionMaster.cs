@@ -146,6 +146,18 @@ namespace resource.diction
             return DicDtlList.Find(c => c.code.Equals(code))?.string_value ?? code;
         }
 
+        public string GetDtlStrCode(string code, out byte level)
+        {
+            DictionDtl dtl = DicDtlList.Find(c => c.code.Equals(code));
+            if (dtl != null)
+            {
+                level = dtl.level;
+                return dtl?.string_value ?? code;
+            }
+            level = 0;
+            return code;
+        }
+
         public uint GetDtlUIntCode(string code)
         {
             return DicDtlList.Find(c => c.code.Equals(code))?.uint_value ?? 0;

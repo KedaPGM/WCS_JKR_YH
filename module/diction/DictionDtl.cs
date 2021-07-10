@@ -15,5 +15,6 @@ namespace module.diction
         public uint uint_value { set; get; }
         public int order { set; get; }
         public DateTime? updatetime { set; get; }
+        public byte level { set; get; }
     }
 }

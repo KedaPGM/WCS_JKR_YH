@@ -1,6 +1,7 @@
 ﻿using enums;
 using module.device;
 using socket.tcp;
+using tool.appconfig;
 
 namespace task.task
 {
@@ -91,6 +92,22 @@ namespace task.task
             get => IsNeed_1 || IsNeed_2;
         }
 
+        #region[报警灯]
+
+        /// <summary>
+        /// 是否有报警灯信息
+        /// </summary>
+        public DevLight Config_Light { set; get; }
+        /// <summary>
+        /// 灯亮
+        /// </summary>
+        public bool LightOn { get => DevStatus.AlertLightStatus == 1; }
+        /// <summary>
+        /// 灯灭
+        /// </summary>
+        public bool LightOff { get => DevStatus.AlertLightStatus == 0; }
+        #endregion
+
         public TileShiftStatusE TileShiftStatus
         {
             get => DevStatus?.ShiftStatus ?? TileShiftStatusE.完成;
@@ -178,6 +195,11 @@ namespace task.task
         internal void DoShift(TileShiftStatusE ts, int count = 0)
         {
             DevTcp?.SendCmd(DevLifterCmdTypeE.转产, (byte)ts, (byte)count);
+        }
+
+        internal void DoLight(TileLightShiftE light)
+        {
+            DevTcp?.SendCmd(DevLifterCmdTypeE.开关灯, (byte)light, 0);
         }
 
         internal void SetInTaskStatus(bool status)

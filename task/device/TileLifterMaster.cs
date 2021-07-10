@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using task.task;
+using tool.appconfig;
 using tool.mlog;
 using tool.timer;
 
@@ -55,6 +56,8 @@ namespace task.device
             {
                 TileLifterTask task = new TileLifterTask();
                 task.Device = dev;
+                task.Config_Light = GlobalWcsDataConfig.AlertLightConfig.GetDevLight(dev.id);
+
                 //task.AreaId = PubMaster.Area.GetAreaId(dev.id);
                 task.Start();
                 DevList.Add(task);
@@ -103,7 +106,10 @@ namespace task.device
         {
 
         }
-
+        /// <summary>
+        /// 只要发送了内容，就会有反馈则不再发送查询内容
+        /// </summary>
+        private bool refreshsend = false;
         private void Refresh()
         {
             while (Refreshing)
@@ -114,86 +120,139 @@ namespace task.device
                     {
                         foreach (TileLifterTask task in DevList)
                         {
-                            if (task.IsEnable)
+                            try
                             {
-                                task.DoQuery();
-                            }
+                                refreshsend = false;
 
-                            if (task.Type != DeviceTypeE.下砖机) continue;
-                            if (task.DevStatus.Goods1 == 0 || task.DevStatus.Goods2 == 0) continue;
+                                if (task.Type != DeviceTypeE.下砖机) continue;
+                                if (task.DevStatus.Goods1 == 0 || task.DevStatus.Goods2 == 0) continue;
 
-                            int count = PubMaster.Dic.GetDtlIntCode("TileLifterShiftCount");
-                            switch (task.DevStatus.ShiftStatus)
-                            {
-                                case TileShiftStatusE.复位:
-                                    #region [复位]
-                                    if (task.Device.do_shift)
-                                    {
-                                        Thread.Sleep(500);
-                                        task.DoShift(TileShiftStatusE.转产中, count);
-                                        break;
-                                    }
-
-                                    if (!task.Device.do_shift)
-                                    {
-                                        if (task.DevStatus.ShiftAccept)
+                                int count = PubMaster.Dic.GetDtlIntCode("TileLifterShiftCount");
+                                switch (task.DevStatus.ShiftStatus)
+                                {
+                                    case TileShiftStatusE.复位:
+                                        #region [复位]
+                                        if (task.Device.do_shift)
                                         {
-                                            Thread.Sleep(500);
-                                            task.DoShift(TileShiftStatusE.复位);
-                                        }
-
-                                        if (task.Device.LeftGoods != task.DevStatus.Goods1 ||
-                                            task.Device.RightGoods != task.DevStatus.Goods2)
-                                        {
-                                            PubMaster.Device.SetTileLifterGoods(task.ID, task.DevStatus.Goods1, task.DevStatus.Goods2);
-                                        }
-                                        break;
-                                    }
-                                    #endregion
-                                    break;
-                                case TileShiftStatusE.转产中:
-                                    #region [转产中]
-                                    if (task.Device.do_shift)
-                                    {
-                                        if (!task.DevStatus.ShiftAccept)
-                                        {
-                                            Thread.Sleep(500);
                                             task.DoShift(TileShiftStatusE.转产中, count);
+                                            refreshsend = true;
                                             break;
                                         }
-                                    }
 
-                                    if (!task.Device.do_shift)
-                                    {
-                                        if (task.DevStatus.ShiftAccept)
+                                        if (!task.Device.do_shift)
                                         {
-                                            Thread.Sleep(500);
-                                            task.DoShift(TileShiftStatusE.复位);
+                                            if (task.DevStatus.ShiftAccept)
+                                            {
+                                                task.DoShift(TileShiftStatusE.复位);
+                                                refreshsend = true;
+                                            }
+
+                                            if (task.Device.LeftGoods != task.DevStatus.Goods1 ||
+                                                task.Device.RightGoods != task.DevStatus.Goods2)
+                                            {
+                                                PubMaster.Device.SetTileLifterGoods(task.ID, task.DevStatus.Goods1, task.DevStatus.Goods2);
+                                            }
                                             break;
                                         }
-                                    }
-                                    #endregion
-                                    break;
-                                case TileShiftStatusE.完成:
-                                    #region [完成]
-                                    if (task.Device.do_shift && task.DevStatus.ShiftAccept &&
-                                        task.Device.LeftGoods != task.DevStatus.Goods1 &&
-                                        task.Device.RightGoods != task.DevStatus.Goods2 &&
-                                        task.DevStatus.Goods1 == task.DevStatus.Goods2)
-                                    {
-                                        Thread.Sleep(500);
-                                        task.DoShift(TileShiftStatusE.复位);
-
-                                        task.Device.do_shift = false;
-                                        PubMaster.Device.SetTileLifterGoods(task.ID, task.DevStatus.Goods1, task.DevStatus.Goods2);
+                                        #endregion
                                         break;
-                                    }
-                                    #endregion
-                                    break;
-                                default:
-                                    break;
-                            }
+                                    case TileShiftStatusE.转产中:
+                                        #region [转产中]
+                                        if (task.Device.do_shift)
+                                        {
+                                            if (!task.DevStatus.ShiftAccept)
+                                            {
+                                                task.DoShift(TileShiftStatusE.转产中, count);
+                                                refreshsend = true;
+                                                break;
+                                            }
+                                        }
 
+                                        if (!task.Device.do_shift)
+                                        {
+                                            if (task.DevStatus.ShiftAccept)
+                                            {
+                                                task.DoShift(TileShiftStatusE.复位);
+                                                refreshsend = true;
+                                                break;
+                                            }
+                                        }
+                                        #endregion
+                                        break;
+                                    case TileShiftStatusE.完成:
+                                        #region [完成]
+                                        if (task.Device.do_shift && task.DevStatus.ShiftAccept &&
+                                            task.Device.LeftGoods != task.DevStatus.Goods1 &&
+                                            task.Device.RightGoods != task.DevStatus.Goods2 &&
+                                            task.DevStatus.Goods1 == task.DevStatus.Goods2)
+                                        {
+                                            task.DoShift(TileShiftStatusE.复位);
+                                            refreshsend = true;
+
+                                            task.Device.do_shift = false;
+                                            PubMaster.Device.SetTileLifterGoods(task.ID, task.DevStatus.Goods1, task.DevStatus.Goods2);
+                                            break;
+                                        }
+                                        #endregion
+                                        break;
+                                    default:
+                                        break;
+                                }
+
+
+                                #region[报警灯逻辑]
+
+                                if (task.Config_Light != null && task.Config_Light.HaveLight)
+                                {
+                                    bool havewarn = false;
+                                    //自管砖机本身的报警信息
+                                    if (task.Config_Light.OnlyMyself)
+                                    {
+                                        havewarn = PubMaster.Warn.HaveDevWarn(task.ID, task.Config_Light.WarnLevel);
+                                    }
+                                    //自管区域的报警信息
+                                    else if (task.Config_Light.OnlyArea)
+                                    {
+                                        havewarn = PubMaster.Warn.HaveAreaWarn(task.AreaId, task.Config_Light.WarnLevel);
+                                    }
+                                    //自管区域线路的报警信息
+                                    //else if (task.Config_Light.OnlyLine)
+                                    //{
+                                    //    havewarn = PubMaster.Warn.HaveAreaLineWarn(task.AreaId, task.Line, task.Config_Light.WarnLevel);
+                                    //}
+
+                                    ///有报警，灯关 则 开灯
+                                    if (havewarn)
+                                    {
+                                        if (task.LightOff)
+                                        {
+                                            task.DoLight(TileLightShiftE.灯开);
+                                            refreshsend = true;
+                                        }
+                                    }
+                                    //无报警，灯开 则 关灯
+                                    else
+                                    {
+                                        if (task.LightOn)
+                                        {
+                                            task.DoLight(TileLightShiftE.灯关);
+                                            refreshsend = true;
+                                        }
+                                    }
+                                }
+
+                                #endregion
+                            }catch(Exception e)
+                            {
+
+                            }
+                            finally
+                            {
+                                if (task.IsEnable && !refreshsend)
+                                {
+                                    task.DoQuery();
+                                }
+                            }
                         }
                     }
                     finally { Monitor.Exit(_obj); }
