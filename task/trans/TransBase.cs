@@ -42,6 +42,12 @@ namespace task.trans
             InitTrans();
         }
 
+        protected void InitDiagnore(TransMaster trans)
+        {
+            MDiagnoreServer = new DiagnoseServer(trans);
+        }
+
+
         private void InitTrans()
         {
             TransList.Clear();

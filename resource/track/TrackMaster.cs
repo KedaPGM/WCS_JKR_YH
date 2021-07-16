@@ -233,6 +233,11 @@ namespace resource.track
             (c.Type == TrackTypeE.储砖_入 || c.Type == TrackTypeE.储砖_出 || c.Type == TrackTypeE.储砖_出入))?.id ?? 0;
         }
 
+        internal ushort GetTrackArea(ushort trackid)
+        {
+            return (ushort)(GetTrack(trackid)?.area ?? 0);
+        }
+
         /// <summary>
         /// 获取轨道位置相对顺序
         /// </summary>

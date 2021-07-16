@@ -1433,6 +1433,21 @@ namespace task.device
             return false;
         }
 
+
+        /// <summary>
+        /// 查找是否存在运输车在指定的轨道
+        /// 1.ID对应的轨道
+        /// 2.轨道的兄弟轨道
+        /// </summary>
+        /// <param name="trackid"></param>
+        /// <returns></returns>
+        internal bool HaveInWholeTrack(uint trackid, uint carrierid)
+        {
+            Track track = PubMaster.Track.GetTrack(trackid);
+            return DevList.Exists(c => c.ID != carrierid && track.IsInTrack(c.Site)// && c.IsEnable 不管车有没有启用，在就是在
+            );
+        }
+
         #endregion
 
         #region[判断条件]

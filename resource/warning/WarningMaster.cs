@@ -120,6 +120,7 @@ namespace task
                     track_id = (ushort)trackid
                 };
                 string devname = PubMaster.Device.GetDeviceName(devid);
+                warn.area_id = (ushort)PubMaster.Device.GetDeviceArea(devid);
                 string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString(), out byte level);
                 if (trackid > 0)
                 {
@@ -162,6 +163,7 @@ namespace task
                     track_id = alertidx
                 };
                 string devname = PubMaster.Device.GetDeviceName(devid);
+                warn.area_id = (ushort)PubMaster.Device.GetDeviceArea(devid);
                 string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString(), out byte level);
                 warn.content = devname + ": " + warnmsg;
                 warn.level = level;
@@ -202,6 +204,7 @@ namespace task
                     trans_id = transid
                 };
                 string devname = PubMaster.Device.GetDeviceName(devid);
+                warn.area_id = (ushort)PubMaster.Device.GetDeviceArea(devid);
                 string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString(), out byte level);
                 warn.content = devname + ": " + warnmsg;
                 warn.level = level;
@@ -225,6 +228,7 @@ namespace task
                     type = (byte)warntype,
                 };
                 string traname = trackname ?? PubMaster.Track.GetTrackName(trackid);
+                warn.area_id = (ushort)PubMaster.Track.GetTrackArea(trackid);
                 string warnmsg = PubMaster.Dic.GetDtlStrCode(warntype.ToString(), out byte level);
                 warn.content = traname + ": " + warnmsg;
                 warn.level = level;

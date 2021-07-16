@@ -18,6 +18,10 @@ namespace task.trans
     /// </summary>
     public class TransMaster : TransBase
     {
+        public TransMaster():base()
+        {
+            InitDiagnore(this);
+        }
         #region[调度任务]
 
         #region[入库任务]
@@ -337,7 +341,37 @@ namespace task.trans
                                     }
                                 }
 
-                                SetStatus(trans, TransStatusE.完成);
+
+                                #region 移车
+
+                                if (PubMaster.Track.IsTrackFull(trans.give_track_id)
+                                    && !PubTask.TileLifter.HaveOtherNeed(trans.tilelifter_id))
+                                {
+                                    // 优先移动到空轨道
+                                    List<uint> trackids = PubMaster.Area.GetAreaTrackIds(trans.area_id, TrackTypeE.储砖_入);
+
+                                    List<uint> tids = PubMaster.Track.SortTrackIdsWithOrder(trackids, track.id, PubMaster.Track.GetTrack(track.id).order);
+
+                                    foreach (uint t in tids)
+                                    {
+                                        if (!IsTraInTrans(t)
+                                            && !PubMaster.Track.IsTrackFull(t)
+                                            && PubMaster.Area.IsFerryWithTrack(trans.area_id, trans.give_ferry_id, t)
+                                            && !PubTask.Carrier.HaveInWholeTrack(t, trans.carrier_id))
+                                        {
+                                            trans.finish_track_id = t;
+                                            SetStatus(trans, TransStatusE.移车中);
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                #endregion
+
+                                if (trans.finish_track_id == 0)
+                                {
+                                    SetStatus(trans, TransStatusE.完成);
+                                }
                             }
                             #endregion
                             break;
@@ -444,6 +478,110 @@ namespace task.trans
                             break;
                             #endregion
                     }
+                    break;
+                #endregion
+
+                #region[移车流程]
+                case TransStatusE.移车中:
+
+                    //小车没有被其他任务占用
+                    if (HaveCarrierInTrans(trans)) return;
+
+                    //小车当前所在的轨道
+                    track = PubTask.Carrier.GetCarrierTrack(trans.carrier_id);
+                    if (track == null) return;
+
+                    #region[分配摆渡车/锁定摆渡车]
+
+                    if (track.Type != TrackTypeE.储砖_入)
+                    {
+                        if (trans.give_ferry_id == 0)
+                        {
+                            //还没有分配取货过程中的摆渡车
+                            AllocateFerry(trans, DeviceTypeE.下摆渡, track, true);
+                            //调度摆渡车接运输车
+                        }
+                        else
+                        {
+                            if (!PubTask.Ferry.TryLock(trans, trans.give_ferry_id, track.id))
+                            {
+                                return;
+                            }
+                        }
+                    }
+
+                    #endregion
+
+                    isload = PubTask.Carrier.IsLoad(trans.carrier_id);
+                    isnotload = PubTask.Carrier.IsNotLoad(trans.carrier_id);
+
+                    switch (track.Type)
+                    {
+                        #region[小车在下砖轨道]
+                        case TrackTypeE.下砖轨道:
+                            SetStatus(trans, TransStatusE.取消);
+                            break;
+                        #endregion
+
+                        #region[小车在摆渡车上]
+                        case TrackTypeE.摆渡车_入:
+                            //小车在摆渡车上
+                            if (PubTask.Ferry.IsLoad(trans.give_ferry_id)
+                                && PubTask.Carrier.IsStopFTask(trans.carrier_id))
+                            {
+                                if (trans.finish_track_id == 0)
+                                {
+                                    SetStatus(trans, TransStatusE.取消);
+                                }
+                                else
+                                {
+                                    if (LockFerryAndAction(trans, trans.give_ferry_id, trans.finish_track_id, track.id, out string _))
+                                    {
+                                        PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.前进至点);
+                                    }
+                                }
+                            }
+                            break;
+                        #endregion
+
+                        #region[小车在放砖轨道]
+                        case TrackTypeE.储砖_出入:
+                        case TrackTypeE.储砖_入:
+                            if (track.id == trans.finish_track_id)
+                            {
+                                if (PubTask.Carrier.IsStopFTask(trans.carrier_id))
+                                {
+                                    SetStatus(trans, TransStatusE.完成);
+                                }
+
+                                return;
+                            }
+
+                            if (track.id != trans.give_track_id)
+                            {
+                                SetStatus(trans, TransStatusE.完成);
+                                return;
+                            }
+
+                            if (trans.finish_track_id == 0)
+                            {
+                                SetStatus(trans, TransStatusE.完成);
+                                return;
+                            }
+                            else
+                            {
+                                if (LockFerryAndAction(trans, trans.give_ferry_id, trans.give_track_id, track.id, out string _))
+                                {
+                                    if (PubTask.Carrier.IsStopFTask(trans.carrier_id))
+                                    {
+                                        PubTask.Carrier.DoTask(trans.carrier_id, DevCarrierTaskE.后退至摆渡车);
+                                    }
+                                }
+                            }
+                            break;
+                            #endregion
+                    }
+
                     break;
                     #endregion
             }

@@ -562,6 +562,27 @@ namespace task.device
         #endregion
 
         #region[检查状态/生成交易]
+        /// <summary>
+        /// 判断是否有其他砖机有需求
+        /// </summary>
+        /// <param name="devid"></param>
+        /// <returns></returns>
+
+        public bool HaveOtherNeed(uint devid)
+        {
+            List<uint> ids;
+            // 1 2 3 一组， 4 5 6 一组
+            if (devid < 4)
+            {
+                ids = new List<uint> { 1, 2, 3 };
+            }
+            else
+            {
+                ids = new List<uint> { 4, 5, 6 };
+            }
+
+            return DevList.Exists(c => ids.Contains(c.ID) && (c.IsNeed_1 || c.IsNeed_2));
+        }
 
         /// <summary>
         /// 检查上下砖机状态

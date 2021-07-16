@@ -20,8 +20,7 @@ namespace resource.module.modulesql
         public List<Warning> QueryWarningList()
         {
             List<Warning> list = new List<Warning>();
-            string sql = string.Format("SELECT t.id, t.area_id, t.type, t.resolve, t.dev_id, t.trans_id, t.track_id, t.content," +
-                " t.createtime, t.resolvetime FROM warning AS t WHERE t.resolve = false ");
+            string sql = string.Format("SELECT t.* FROM warning AS t WHERE t.resolve = false ");
             DataTable dt = mSql.ExecuteQuery(@sql);
             if (!mSql.IsNoData(dt))
             {
